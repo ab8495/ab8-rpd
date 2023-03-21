@@ -1,0 +1,164 @@
+SESSION_CONFIGS = [
+    {  # basic settings
+        'app_sequence': ['prisoners_dilemma'],
+        'name': 'Debug',
+        'display_name': '16 Auto-Click ',
+        'num_demo_participants': 4,
+        'use_browser_bots': False,
+
+        # set number of participants (must be even),
+        'num_participants': 4,
+
+        # debugging settings (set debug to 1 to automate play)
+        'debug': 1,
+        'time': 1,  # number of seconds per page
+
+        # set random seed (random random seed unless random_seed>0):
+        'random_seed': 0,
+
+        # PD game payoff settings
+        'num_supergames': 9,
+        'num_blocks': 3,
+        'pd_conversion': 0.0025,
+
+        'pd_1_cc': 48,
+        'pd_1_dd': 26,
+        'pd_1_cd': 12,
+        'pd_1_dc': 50,
+        'pd_1_delta': 90,
+
+        'pd_2_cc': 48,
+        'pd_2_dd': 26,
+        'pd_2_cd': 12,
+        'pd_2_dc': 50,
+        'pd_2_delta': 75,
+
+        'pd_3_cc': 48,
+        'pd_3_dd': 26,
+        'pd_3_cd': 12,
+        'pd_3_dc': 50,
+        'pd_3_delta': 50,
+
+        'pd_4_cc': 40,
+        'pd_4_dd': 26,
+        'pd_4_cd': 12,
+        'pd_4_dc': 50,
+        'pd_4_delta': 90,
+
+        'pd_5_cc': 40,
+        'pd_5_dd': 26,
+        'pd_5_cd': 12,
+        'pd_5_dc': 50,
+        'pd_5_delta': 75,
+
+        'pd_6_cc': 40,
+        'pd_6_dd': 26,
+        'pd_6_cd': 12,
+        'pd_6_dc': 50,
+        'pd_6_delta': 50,
+
+        'pd_7_cc': 34,
+        'pd_7_dd': 26,
+        'pd_7_cd': 12,
+        'pd_7_dc': 50,
+        'pd_7_delta': 90,
+
+        'pd_8_cc': 34,
+        'pd_8_dd': 26,
+        'pd_8_cd': 12,
+        'pd_8_dc': 50,
+        'pd_8_delta': 75,
+
+        'pd_9_cc': 34,
+        'pd_9_dd': 26,
+        'pd_9_cd': 12,
+        'pd_9_dc': 50,
+        'pd_9_delta': 50,
+
+        # Stag Hunt game settings
+        'num_stag': 16,  # number of stag hunt games
+        'sh_conversion': 0.2,
+
+        # Stag Hunt game payoffs
+        'sh_1_ee': 68,  # payoff from mutual high-effort
+        'sh_1_es': 12,  # payoff from safe-action
+        'sh_1_se': 30,  # payoff from single high-effort
+        'sh_1_ss': 50,  # payoff from single high-effort
+
+        'sh_2_ee': 68,  # payoff from mutual high-effort
+        'sh_2_es': 12,  # payoff from safe-action
+        'sh_2_se': 42,  # payoff from single high-effort
+        'sh_2_ss': 50,  # payoff from single high-effort
+
+        'sh_3_ee': 68,  # payoff from mutual high-effort
+        'sh_3_es': 12,  # payoff from safe-action
+        'sh_3_se': 54,  # payoff from single high-effort
+        'sh_3_ss': 50,  # payoff from single high-effort
+
+        'sh_4_ee': 68,  # payoff from mutual high-effort
+        'sh_4_es': 12,  # payoff from safe-action
+        'sh_4_se': 66,  # payoff from single high-effort
+        'sh_4_ss': 50,  # payoff from single high-effort
+
+        'sh_5_ee': 68,  # payoff from mutual high-effort
+        'sh_5_es': 24,  # payoff from safe-action
+        'sh_5_se': 30,  # payoff from single high-effort
+        'sh_5_ss': 50,  # payoff from single high-effort
+
+        'sh_6_ee': 68,  # payoff from mutual high-effort
+        'sh_6_es': 24,  # payoff from safe-action
+        'sh_6_se': 42,  # payoff from single high-effort
+        'sh_6_ss': 50,  # payoff from single high-effort
+
+        'sh_7_ee': 68,  # payoff from mutual high-effort
+        'sh_7_es': 24,  # payoff from safe-action
+        'sh_7_se': 54,  # payoff from single high-effort
+        'sh_7_ss': 50,  # payoff from single high-effort
+
+        'sh_8_ee': 68,  # payoff from mutual high-effort
+        'sh_8_es': 24,  # payoff from safe-action
+        'sh_8_se': 66,  # payoff from single high-effort
+        'sh_8_ss': 50,  # payoff from single high-effort
+
+        'sh_9_ee': 68,  # payoff from mutual high-effort
+        'sh_9_es': 36,  # payoff from safe-action
+        'sh_9_se': 30,  # payoff from single high-effort
+        'sh_9_ss': 50,  # payoff from single high-effort
+
+        'sh_10_ee': 68,  # payoff from mutual high-effort
+        'sh_10_es': 36,  # payoff from safe-action
+        'sh_10_se': 42,  # payoff from single high-effort
+        'sh_10_ss': 50,  # payoff from single high-effort
+
+        'sh_11_ee': 68,  # payoff from mutual high-effort
+        'sh_11_es': 36,  # payoff from safe-action
+        'sh_11_se': 54,  # payoff from single high-effort
+        'sh_11_ss': 50,  # payoff from single high-effort
+
+        'sh_12_ee': 68,  # payoff from mutual high-effort
+        'sh_12_es': 36,  # payoff from safe-action
+        'sh_12_se': 66,  # payoff from single high-effort
+        'sh_12_ss': 50,  # payoff from single high-effort
+
+        'sh_13_ee': 68,  # payoff from mutual high-effort
+        'sh_13_es': 48,  # payoff from safe-action
+        'sh_13_se': 30,  # payoff from single high-effort
+        'sh_13_ss': 50,  # payoff from single high-effort
+
+        'sh_14_ee': 68,  # payoff from mutual high-effort
+        'sh_14_es': 48,  # payoff from safe-action
+        'sh_14_se': 42,  # payoff from single high-effort
+        'sh_14_ss': 50,  # payoff from single high-effort
+
+        'sh_15_ee': 68,  # payoff from mutual high-effort
+        'sh_15_es': 48,  # payoff from safe-action
+        'sh_15_se': 54,  # payoff from single high-effort
+        'sh_15_ss': 50,  # payoff from single high-effort
+
+        'sh_16_ee': 68,  # payoff from mutual high-effort
+        'sh_16_es': 48,  # payoff from safe-action
+        'sh_16_se': 66,  # payoff from single high-effort
+        'sh_16_ss': 50,  # payoff from single high-effort
+
+    }
+]

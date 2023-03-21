@@ -1,0 +1,26 @@
+    {{ if first_gen }}
+    <p style ='margin-bottom: 2cm'>
+        You are the first set of players. No advice is given.
+    </p>
+    {{ else }}
+    <p>
+        You received the following advice from your predecessor:
+    </p>
+    <div style = 'height:200px; border:1px solid black;padding:20px;margin-bottom: 1cm;overflow:auto;' align="left">
+        <i>
+            {{r_advice}}
+        </i>
+    </div>
+    {{ endif }}
+{{ if first_period }}
+    <p class = "info">
+        This is your first round, there is no history.
+    </p>
+{{ else }}
+    <p>
+        In past rounds:
+    </p>
+        <div class="left" style="padding-left:60px">
+            {% include 'prisoner/History.html' %}
+        </div>
+{{ endif }}

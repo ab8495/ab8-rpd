@@ -1,0 +1,186 @@
+{{ block title }}Your Interpretation{{ endblock }}
+{{ block content }}
+{% block styles %}
+
+<style>
+
+        .otree-body {
+            max-width: 100%
+
+        }
+
+        .advice {
+            text-align:left;
+            border:1px solid black;
+            border-padding:10px;
+        }
+        .otree-title {
+            text-align: center;
+         }
+
+        .fixed_table {
+            table-layout:fixed;
+            width:330px;
+            height:380px;
+        }
+
+        td {
+            text-align: center;
+            font-size: 125%;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+        }
+
+        .left {
+            width: 33%;
+        }
+
+        .right {
+            width: 66%;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        h3 {
+            text-align: center;
+        }
+
+        h4 {
+            text-align: center;
+        }
+
+        .choice {
+            margin-left: 0px
+        }
+
+        .payoffs {
+            height: 75px;
+            border: solid black;
+            border-width: 2px;
+        }
+
+        .your-choice {
+            border: none;
+            width: 60px;
+            font-weight: bold;
+        }
+
+        .empty {
+            border: none;
+        }
+
+        .fixed_table_info {
+            table-layout:fixed;
+            height:130px;
+            width:320px;
+        }
+
+        .info_cells {
+            height: 20px;
+            width: 60px;
+            border: 0.5px solid black;
+        }
+
+        .info_cells_header {
+            height: 20px;
+            width: 50px;
+            border: none;
+        }
+
+        .vertical-row {
+            Float: left;
+            height: 400px;
+            width: 1px; /* edit this if you want */
+            background-color: black
+        }
+        .noselect {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -khtml-user-select: none; /* Konqueror HTML */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+        }
+    </style>
+{% endblock %}
+
+<div style="padding-left:60px;padding-right:60px">
+    {{ if r }}
+        <p>
+            You received the following advice from your predecessor:
+        </p>
+    {{ else }}
+        <p>
+            You gave the following advice to your successor:
+        </p>
+    {{ endif }}
+        <div style = 'border:1px solid black;padding:20px;margin-bottom: 1px;height:100px;overflow:auto;' align="left">
+            <i>
+                {{advice}}
+            </i>
+        </div>
+        <div class="row" style = "height:240px;">
+        <div class="left">
+        {{ if first }}
+            <div align="left", style ="margin-top: 80px;">
+            Consider the choice in the first round (that is, with no previous rounds played).
+            </div>
+        {{ else }}
+            Consider the choice to be made after the following sequence of choices by the other participant:
+            <div align="center", style ="margin-top: 10px;">
+                {% include 'prisoner/surveyHistory.html' %}
+            </div>
+        {{ endif }}
+        </div>
+        <div class = "right" style = "margin-top: 80px;">
+        <form>
+            <input type="radio" id="Yes" name="clear" value="True" required>
+            <label for="Yes">The advice is clear about what to do in this scenario.</label><br>
+            <input type="radio" id="No" name="clear" value="False" required>
+            <label for="No">The advice is NOT clear about what to do in this scenario.</label>
+        </form>
+        </div>
+        </div>
+    {{ if r }}
+        <p>
+            What do you think the advice instructs you to do in this scenario?
+        </p>
+    {{ else }}
+        <p>
+            What do you think the advice instructs your successor to do in this scenario?
+        </p>
+    {{ endif }}
+    <div class="form-group required">
+        
+
+        <table class="table table-bordered text-center" style="width: auto; margin: auto">
+            <tr>
+                <th colspan="2" rowspan="2"></th>
+                <th colspan="2">The Other Participant's Choice</th>
+            </tr>
+            <tr>
+                <th>{{ C.C_TAG}}</th>
+                <th>{{ C.D_TAG}}</th>
+            </tr>
+            <tr>
+                <th rowspan="2"><span>Your Choice</span></th>
+                <td><button name="interpret" value="True" class="btn btn-primary btn-large">{{ C.C_TAG}}</button></td>
+                <td>{{C.PAYOFF_CC}}, {{C.PAYOFF_CC}}</td>
+                <td>{{ C.PAYOFF_CD }}, {{C.PAYOFF_DC}}</td>
+            </tr>
+            <tr>
+                <td><button name="interpret" value="False" class="btn btn-primary btn-large">{{ C.D_TAG}}</button></td>
+                <td>{{C.PAYOFF_DC}}, {{ C.PAYOFF_CD }}</td>
+                <td>{{C.PAYOFF_DD}}, {{C.PAYOFF_DD}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+</div>
+
+{{ endblock }}

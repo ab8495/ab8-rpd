@@ -1,0 +1,52 @@
+<div class="card bg-light m-3">
+    <div class="card-body">
+
+    <h3>
+        {{ if rsurvey }} Received {{ else }} Given {{ endif }} Advice Survey Instructions
+    </h3>
+    {{ if rsurvey }}
+        <p>
+            In your next task you will try to interpret what the player who advised you would want you to choose in various situations based on their advice.
+        </p>
+        <p>
+            The person who gave you this advice has already provided answers to what they want you to do in these situations. You will receive an additional payoff of {{ C.PAYOFF_I }} for each answer you provide that agrees with theirs.
+        </p>
+    {{ else }}
+        <p>
+            In this next part you will answer what choices you would want the subsequent player to make after various courses of play. 
+        </p>
+        <p>
+            This player will also provide their own guess as to what you want them to play based on the advice you provided. For each answer they correctly guess, you will receive an additional payoff of {{ C.PAYOFF_I }}.
+        </p>
+    {{ endif }}
+    <p>
+        You will also have to answer whether the advice clearly indicates which action should be taken
+    </p>
+    <p><i>In each cell, the amount to the left is the payoff for
+        you and to the right for the other participant.</i></p>
+
+    <table class='table table-bordered text-center'
+           style='width: auto; margin: auto'>
+        <tr>
+            <th colspan=2 rowspan=2></th>
+            <th colspan=2>The Other Participant</th>
+        </tr>
+        <tr>
+            <th>{{C.C_TAG}}</th>
+            <th>{{C.D_TAG}}</th>
+        </tr>
+        <tr>
+            <th rowspan=2><span style="transform: rotate(-90deg);">You</span></th>
+            <th>{{C.C_TAG}}</th>
+            <td>{{ C.PAYOFF_CC }}, {{ C.PAYOFF_CC }}</td>
+            <td>{{ C.PAYOFF_CD }}, {{ C.PAYOFF_DC }}</td>
+        </tr>
+        <tr>
+            <th>{{C.D_TAG}}</th>
+            <td>{{ C.PAYOFF_DC }}, {{ C.PAYOFF_CD }}</td>
+            <td>{{ C.PAYOFF_DD }}, {{ C.PAYOFF_DD }}</td>
+        </tr>
+    </table>
+
+</div>
+</div>

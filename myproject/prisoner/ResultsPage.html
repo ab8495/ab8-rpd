@@ -1,0 +1,551 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+{% load index %}
+{% block styles %}
+
+    <style>
+
+        .otree-body {
+            max-width: 100%
+
+        }
+
+        .otree-title {
+            display: none;
+         }
+
+        .fixed_table {
+            table-layout:fixed;
+            width:330px;
+            height:380px;
+        }
+
+        td {
+            text-align: center;
+            font-size: 125%;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+        }
+
+        .left {
+            width: 33%;
+        }
+
+        .middle {
+            width: 33%;
+        }
+
+        .right {
+            width: 33%;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        h3 {
+            text-align: center;
+        }
+
+        h4 {
+            text-align: center;
+        }
+
+        .choice {
+            margin-left: 0px
+        }
+
+        .payoffs {
+            height: 75px;
+            border: solid black;
+            border-width: 2px;
+        }
+
+        .your-choice {
+            border: none;
+            width: 60px;
+            font-weight: bold;
+        }
+
+        .empty {
+            border: none;
+        }
+
+        .fixed_table_info {
+            table-layout:fixed;
+            height:130px;
+            width:320px;
+        }
+
+        .info_cells {
+            height: 20px;
+            width: 60px;
+            border: 0.5px solid black;
+        }
+
+        .info_cells_header {
+            height: 20px;
+            width: 50px;
+            border: none;
+        }
+
+        .vertical-row {
+            Float: left;
+            height: 400px;
+            width: 1px; /* edit this if you want */
+            background-color: black
+        }
+        .noselect {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -khtml-user-select: none; /* Konqueror HTML */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+        }
+    </style>
+{% endblock %}
+{% block title %}{% endblock %}
+
+{% block content %}
+            <h4 style="color:orangered"> <i>Please wait for other groups ...</i></h4>
+<h1><i>Match: {{ current_match }} &nbsp; Round: {{ period_number }}</i></h1>
+
+
+<div class="row">
+    {%if h_evidence == 1 and s_evidence == 1 %}
+    <div class="left" style="border-top: solid black 0.8px;border-right:solid black 1px;padding-left:30px">
+        {% include 'prisoners_dilemma_nbyn/History.html' %}
+    </div>
+    {% else %}
+    <div class="left" style="border-top: solid black 0.8px;border-right:solid black 1px;padding-left:50px">
+        {% include 'prisoners_dilemma_nbyn/History.html' %}
+    </div>
+    {% endif %}
+
+<div class="middle" style="border-top: solid black 1px;border-right:solid black 1px">
+    <table class="fixed_table" id="choice_matrix" align=center>
+                <col width="50px" />
+                <col width="0px" />
+                <col width="30px" />
+                <col width="75px" />
+                <col width="75px" />
+                <col width="75px" />
+                <col width="40px" />
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td colspan="3"><h4
+                            style="color: black;align:center;padding-top:10px" class="noselect">
+                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</h4></td>
+                </tr>
+                <tr class="empty">
+                    <td class="empty"></td>
+                    <td class="empty"></td>
+                    <td class="empty"></td>
+                    <td colspan="{{num_actions|json}}" id="column_header">  Other </td>
+                </tr>
+
+                <tr class="empty">
+                    <td class="empty"></td>
+                    <td class="empty"></td>
+                    <td class="empty"></td>
+                    {% for label in action_labels %}
+                        <td class="empty" id = "row_{{forloop.counter}}"></td>
+                    {% endfor %}
+                </tr>
+
+                <tr class="empty">
+                    <td class="empty"></td>
+                    <td class="empty" id="cell_0_0"></td>
+                    <td class="empty" id="lower_top"></td>
+                    {% for label in action_labels %}
+                        {% if action_revealed == 0%}
+                            <td class="your-choice other-{{forloop.counter}}" id="cell_0_{{forloop.counter}}" style="border-top:solid 2px rgba(0,0,0,0);border-right: solid 1.99px white; border-left:solid 1.99px white">{{label}}</td>
+                        {% else %}
+                            <td class="your-choice other-{{forloop.counter}}" id="cell_0_{{forloop.counter}}" style="border-top:solid 2px rgba(0,0,0,0);border-right: none; border-left:none">{{label}}</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+
+                {% for payoff_row in payoff_matrix %}
+                    {% with parentloopcounter=forloop.counter %}
+                        <tr class="row-{{forloop.counter}}" id="{{forloop.counter}}-true">
+                        {% if forloop.counter0 == 0 %}
+                                <td rowspan="{{num_actions}}" style="border: none" id="row_header"> You </td>
+                        {% else %}
+                        {% endif %}
+                        <td class="empty"></td>
+                        {% for action in action_labels %}
+                            {% if parentloopcounter == forloop.counter %}
+                                {% if action_revealed == 0 %}
+                                    <td class="your-choice choice-{{forloop.counter}}" id="cell_{{forloop.counter}}_0" style="border-top:solid 1.99px white;border-bottom:solid 1.99px white;border-right:solid 2px black">{{action}}</td>
+                                {% else %}
+                                    <td class="your-choice choice-{{forloop.counter}}" id="cell_{{forloop.counter}}_0" style="border-top:none;border-bottom:none;border-right:none">{{action}}</td>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for payoff_cell in payoff_row %}
+                                {% if others_choice == forloop.counter %}
+                                    <td class="payoffs choice-true-{{parentloopcounter}} other-none-{{forloop.counter}}"
+                                     id="cell_{{parentloopcounter}}_{{forloop.counter}}">{{ payoff_cell.0 }},{{ payoff_cell.1 }}</td>
+                                {% else %}
+                                    <td class="payoffs choice-true-{{parentloopcounter}} other-none-{{forloop.counter}}"
+                                     id="cell_{{parentloopcounter}}_{{forloop.counter}}">{{ payoff_cell.0 }},{{ payoff_cell.1 }}</td>
+                                {% endif %}
+                        {% endfor %}
+                        </tr>
+                    {% endwith %}
+                {% endfor %}
+
+        <tr >
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    {% for label in action_labels %}
+                        <td class="empty"></td>
+                    {% endfor %}
+                    <td></td>
+
+                </tr>
+
+            </table>
+        <p style="text-align:center">
+&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+            &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+            &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+</p>
+
+        </div>
+
+        <div class="right" style="border-top: solid black 1px;">
+    <table class="fixed_table_info" align=center>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td colspan="3"><h4 style="text-align: center;
+                    color: black;padding-top:5%"><i>Information <span style="font-size:large">(seen by both) </span></i> </h4>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td > </td>
+                    <td > </td>
+                    <td > </td>
+                    <td class="info_cells_header" style="font-size:15px">You</td>
+                    <td class="info_cells_header" style="font-size:15px">Other</td>
+                    <td > </td>
+                </tr>
+
+            {% if s_evidence == 1 %}
+                <tr style="text-align:center">
+                    <td > </td>
+                    <td colspan="2" style="text-align:right;padding-right:10px;font-size:15px"> Signal </td>
+                        <td id="your-signal" class="info_cells" style="color:green;font-size:20px;font-weight:bold">{{signal_label}}</td>
+                        <td id="others-signal" class="info_cells" style="color:green;font-size:20px;font-weight:bold">{{others_signal_label}}</td>
+                    <td > </td>
+                </tr>
+            {% endif %}
+            {% if h_evidence == 1 %}
+                <tr style="text-align:center">
+                    <td > </td>
+                    <td colspan="2" style="text-align:right;padding-right:10px;font-size:15px"> Choice </td>
+                    {% if action_revealed == 1 %}
+                    <td id="your-choice-public" class="info_cells" style="color:blue;font-size:20px;font-weight:bold">{{intended_choice_label}}</td>
+                    <td id="others-choice-public" class="info_cells" style="color:blue;font-size:20px;font-weight:bold">{{others_intended_choice_label}}</td>
+                    {% else %}
+                    <td id="your-choice-public" class="info_cells" style="color:black;font-size:20px;">{{intended_choice_label}}</td>
+                    <td id="others-choice-public" class="info_cells" style="color:black;font-size:20px;">{{others_intended_choice_label}}</td>
+                    {% endif %}
+                    <td > </td>
+                </tr>
+            {% endif %}
+            </table>
+
+            {% if s_evidence == 1%}
+                <p style="padding-top:28px"></p>
+            <div style="padding-top:33px" align=center>
+    <div style="border: 1px solid black;width:300px;text-align:center;
+    background-color: lightgrey; border-radius: 10px">
+        <h5 style="padding-bottom:10px;padding-top:10px">What signals can be generated?</h5>
+        <h6 style="font-weight:normal">Choice of <b>C</b> &#x2192; Signal of <b>C</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h6>
+        <h6 style="font-weight:normal">Choice of <b>A</b> &#x2192; Signal of <b>A</b> or <b>C</b></h6>
+        <h6 style="font-weight:normal">Choice of <b>B</b> &#x2192; Signal of <b>B</b> or <b>C</b></h6>
+    </div>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <div class="text-center" style="margin-top: 5px">
+        <button id="click_to" class="b btn btn-primary btn-lg  button2" id='confirm'
+                style="align-self:center; width:20%;height:40px; border-radius:15px;margin-bottom:10px;
+                        background-color:orangered;font-size:large; line-height: 20px;display:none">
+            <!--{{ click_to }}-->
+            Continue
+        </button>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        var continue_button = document.getElementById('click_to');
+        function clickButton() {
+            continue_button.click();
+        }
+
+        setTimeout("clickButton();", {{ time_results_click }});
+
+        window.onload = function () {
+            let num_actions = {{num_actions}};
+            let choice = {{ choice }};
+            let action_revealed = {{ action_revealed }};
+            let others_choice = {{ others_choice }};
+            let intended_choice = {{ intended_choice }};
+            let item_colors = new Array(num_actions);
+            let action_labels = {{ action_labels | json }}
+            let others_intended_choice = {{ others_intended_choice }};
+            let s_evidence = {{ s_evidence }};
+            let h_evidence = {{ h_evidence }};
+            if (action_revealed == 1 || choice != num_actions ){
+                //document.getElementById("row_header").innerHTML = "Signal of Your Choice"
+            }
+            if (action_revealed == 1 || choice != num_actions) {
+                //document.getElementById("column_header").innerHTML = "Signal of Other's Choice"
+            }
+            if (action_revealed == 1) {
+                //document.getElementById("action_revealed_text").innerHTML = "Yes"
+                //document.getElementById("action_revealed_text").style.color = "black"
+                //document.getElementById("signal_revealed_text").innerHTML = "N/A"
+                //document.getElementById("others_signal_revealed_text").innerHTML = "N/A"
+            } else {
+                //document.getElementById("action_revealed_text").innerHTML = "No"
+                //document.getElementById("signal_revealed_text").innerHTML = action_labels[choice-1]
+                //document.getElementById("others_signal_revealed_text").innerHTML = action_labels[others_choice-1]
+                if (choice<3) {
+                    //document.getElementById("signal_revealed_text").style.color = "black"
+                } else {
+                    //document.getElementById("signal_revealed_text").style.color = "black"
+                }
+                if (others_choice<3) {
+                    //document.getElementById("others_signal_revealed_text").style.color = "black"
+                } else {
+                    //document.getElementById("others_signal_revealed_text").style.color = "black"
+                }
+            }
+
+            for (i = 1; i <= num_actions; i++) {
+                item_colors[i-1] = {{ action_colors | json}}[i-1]
+            }
+
+
+            style_foryourborder = "dashed"
+            style_forotherborder = "dashed"
+
+            if (action_revealed == 1) {
+                // color_foryouroutline = "blue"
+                // color_forotheroutline = "blue"
+                color_foryourborder = "green"
+                color_forotherborder = "green"
+            } else if (choice<num_actions & others_choice<num_actions) {
+                color_foryourborder = "green"
+                color_forotherborder = "green"
+            } else if (choice < num_actions & others_choice == num_actions) {
+                color_foryourborder = "green"
+                color_forotherborder = "green"
+            } else if (choice == num_actions & others_choice < num_actions) {
+                color_foryourborder = "green"
+                color_forotherborder = "green"
+            } else {
+                color_foryourborder = "green"
+                color_forotherborder = "green"
+            }
+
+            if (s_evidence == 1) {
+                //document.getElementById("your-signal").innerHTML = "   " + action_labels[choice-1]
+                //document.getElementById("your-signal").style.fontSize = "20px"
+                //document.getElementById("your-signal").style.fontWeight = "bold"
+                //document.getElementById("others-signal").innerHTML = action_labels[others_choice-1]
+                //document.getElementById("others-signal").style.fontSize = "20px"
+                //document.getElementById("others-signal").style.fontWeight = "bold"
+            }
+            if (action_revealed == 1) {
+                if (h_evidence == 1) {
+                    //document.getElementById("your-choice-public").innerHTML = "   " + action_labels[intended_choice - 1]
+                    //document.getElementById("your-choice-public").style.fontSize = "20px"
+                    //document.getElementById("your-choice-public").style.fontWeight = "bold"
+                    //document.getElementById("your-choice-public").style.color = "blue"
+                    //document.getElementById("others-choice-public").innerHTML = "   " + action_labels[others_intended_choice - 1]
+                    //document.getElementById("others-choice-public").style.fontSize = "20px"
+                    //document.getElementById("others-choice-public").style.fontWeight = "bold"
+                    //document.getElementById("others-choice-public").style.color = "blue"
+                }
+            }
+
+            for (i = 1; i <= num_actions; i++) {
+                if (intended_choice == i) {
+                    if (others_choice == num_actions) {
+                        if (action_revealed == 0) {
+                            $('.choice-true-'+i+'.payoffs').css('background-color', item_colors[i-1]).css('opacity', 1);
+                        }
+                    }
+                }
+            }
+            if (action_revealed == 1) {
+                ele_yours = "cell_" + intended_choice.toString() + "_" + others_intended_choice.toString()
+                document.getElementById(ele_yours).style.backgroundColor=item_colors[choice-1]
+            } else if (others_choice != num_actions) {
+                ele_yours = "cell_" + intended_choice.toString() + "_" + others_choice.toString()
+                document.getElementById(ele_yours).style.backgroundColor=item_colors[choice-1]
+                $('ele_yours').css('background-color', item_colors[i-1]).css('opacity', 1);
+            }
+
+            size_foryourborder = "2.02px"
+            size_forotherborder = "2.02px"
+            size_forreplacement = "1.99px"
+            type_forreplacement = "solid"
+
+            if (s_evidence == 1) {
+                for (i = 0; i <= num_actions; i++) {
+                    ele_yours = "cell_" + choice.toString() + "_" + i.toString()
+                    ele_others = "cell_" + i.toString() + "_" + others_choice
+                    document.getElementById(ele_yours).style.border = style_foryourborder
+                    document.getElementById(ele_yours).style.borderColor = color_foryourborder
+                    document.getElementById(ele_yours).style.borderWidth = size_foryourborder
+                    document.getElementById(ele_others).style.border = style_forotherborder
+                    document.getElementById(ele_others).style.borderColor = color_forotherborder
+                    document.getElementById(ele_others).style.borderWidth = size_forotherborder
+                }
+
+                choice_m1 = choice - 1
+                ele = "cell_" + choice_m1.toString() + "_" + others_choice.toString()
+                document.getElementById(ele).style.borderBottom = style_foryourborder
+                document.getElementById(ele).style.borderBottomColor = color_foryourborder
+                document.getElementById(ele).style.borderBottomWidth = size_foryourborder
+
+                others_choice_m1 = others_choice - 1
+                ele = "cell_" + choice.toString() + "_" + others_choice_m1.toString()
+                document.getElementById(ele).style.borderRight = style_foryourborder
+                document.getElementById(ele).style.borderRightColor = color_foryourborder
+                document.getElementById(ele).style.borderRightWidth = size_foryourborder
+
+                for (i = 0; i <= num_actions; i++) {
+                    if (choice < num_actions) {
+                        choice_p1 = choice + 1
+                        ele = "cell_" + choice_p1.toString() + "_" + i.toString()
+                        document.getElementById(ele).style.borderTop = style_foryourborder
+                        document.getElementById(ele).style.borderTopColor = color_foryourborder
+                        document.getElementById(ele).style.borderTopWidth = size_foryourborder
+                    }
+                }
+
+                for (i = 0; i <= num_actions; i++) {
+                    if (others_choice < num_actions) {
+                        others_choice_p1 = others_choice + 1
+                        ele = "cell_" + i.toString() + "_" + others_choice_p1.toString()
+                        document.getElementById(ele).style.borderLeft = style_forotherborder
+                        document.getElementById(ele).style.borderLeftColor = color_forotherborder
+                        document.getElementById(ele).style.borderLeftWidth = size_forotherborder
+                    }
+                }
+
+                for (i = 0; i <= num_actions; i++) {
+                    if (i != others_choice || others_choice == num_actions) {
+                        ele = "cell_" + choice.toString() + "_" + i.toString()
+                        if (i < num_actions) {
+                            document.getElementById(ele).style.borderRight = type_forreplacement
+                            document.getElementById(ele).style.borderRightWidth = size_forreplacement
+                            document.getElementById(ele).style.borderRightColor = "black"
+                        }
+                        if (i > 0) {
+                            document.getElementById(ele).style.borderLeft = type_forreplacement
+                            document.getElementById(ele).style.borderLeftWidth = size_forreplacement
+                            document.getElementById(ele).style.borderLeftColor = "black"
+                        }
+                    }
+                }
+
+
+                for (i = 0; i <= num_actions; i++) {
+                    if (i != choice) {
+                        ele = "cell_" + i.toString() + "_" + others_choice.toString()
+                        if (i < num_actions) {
+                            document.getElementById(ele).style.borderBottom = type_forreplacement
+                            document.getElementById(ele).style.borderBottomWidth = size_forreplacement
+                            document.getElementById(ele).style.borderBottomColor = "black"
+                        }
+                        if (i > 0) {
+                            document.getElementById(ele).style.borderTop = type_forreplacement
+                            document.getElementById(ele).style.borderTopWidth = size_forreplacement
+                            document.getElementById(ele).style.borderTopColor = "black"
+                        }
+                    }
+                }
+
+                document.getElementById("cell_0_0").style.borderBottom = "solid"
+                document.getElementById("cell_0_0").style.borderBottomWidth = "0px"
+                document.getElementById("cell_0_0").style.borderBottomColor = "white"
+
+                ele = "cell_" + choice.toString() + "_" + others_choice.toString()
+
+                document.getElementById(ele).style.borderTop = style_foryourborder
+                document.getElementById(ele).style.borderTopColor = color_foryourborder
+                document.getElementById(ele).style.borderTopWidth = size_foryourborder
+                document.getElementById(ele).style.borderBottom = style_foryourborder
+                document.getElementById(ele).style.borderBottomColor = color_foryourborder
+                document.getElementById(ele).style.borderBottomWidth = size_foryourborder
+
+                document.getElementById(ele).style.borderLeft = style_forotherborder
+                document.getElementById(ele).style.borderLeftColor = color_forotherborder
+                document.getElementById(ele).style.borderLeftWidth = size_forotherborder
+
+                if (others_choice < num_actions) {
+                    document.getElementById(ele).style.borderRight = style_forotherborder
+                    document.getElementById(ele).style.borderRightColor = color_forotherborder
+                    document.getElementById(ele).style.borderRightWidth = size_forotherborder
+                }
+            }
+            if (action_revealed == 1) {
+                for (i=0; i <= num_actions; i++) {
+                    ele = "cell_" + intended_choice.toString() + "_" + i.toString()
+                    if (i==0){
+                        document.getElementById(ele).style.boxShadow = "-1.5px -1.5px 0px 1.5px blue, -1.5px 1.5px 0px 1.5px blue"
+                    } else if (i==num_actions) {
+                        document.getElementById(ele).style.boxShadow = "1.5px -1.5px 0px 1.5px blue, 1.5px 1.5px 0px 1.5px blue"
+                    } else {
+                        document.getElementById(ele).style.boxShadow = "0px -3px 0px 0px blue, 0px 3px 0px 0px blue"
+                    }
+                }
+                for (i=0; i <= num_actions; i++) {
+                    ele = "cell_" + i.toString() + "_" + others_intended_choice.toString()
+                    if (i==0){
+                        document.getElementById(ele).style.boxShadow = "-1.5px -1.5px 0px 1.5px blue, 1.5px -1.5px 0px 1.5px blue"
+                    } else if (i==num_actions) {
+                        document.getElementById(ele).style.boxShadow = "-1.5px 1.5px 0px 1.5px blue, 1.5px 1.5px 0px 1.5px blue"
+                    } else {
+                        document.getElementById(ele).style.boxShadow = "-3px 0px 0px 0px blue, 3px 0px 0px 0px blue"
+                    }
+                }
+            }
+
+            ele = "cell_" + intended_choice.toString() + "_" + others_intended_choice.toString()
+            if (action_revealed == 1) {
+                document.getElementById(ele).style.boxShadow = "0px 0px 0px 3px blue"
+                document.getElementById(ele).style.outline =  "3px solid blue"
+            }
+
+        };
+
+
+    </script>
+
+{% endblock %}

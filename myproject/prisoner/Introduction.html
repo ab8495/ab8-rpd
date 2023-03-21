@@ -1,0 +1,43 @@
+{{ block title }}Introduction{{ endblock }}
+{{ block content }}
+
+    {{ if stage == 1}}
+        {{ include C.INSTRUCTIONS_SURVEY}}
+    {{ else }}
+        {{ if first_gen }}
+            You are the first set of players. No advice is given.
+        {{ else }}
+            You received the following advice from the previous player:
+
+            
+            <div style = 'height:100px; border:1px solid black;padding:10px;margin-bottom: 1cm;overflow:auto;' align="left">
+            <i>
+                {{r_advice}}
+            </i>
+            </div>
+        {{ endif }}
+        <div class="card bg-light m-3" >
+            <div class="card-body">
+
+            <h3>
+            Instructions
+            </h3>
+            <p>
+        You will randomly be assigned a label consisting of group number and a letter (either “A” or “B”). You will be paired with the other member of your group throughout the experiment. So if you are 5A, your partner will be 5B.
+        </p>
+        <p>
+
+        Before any decisions are taken, you will receive advice from the previous participant to have your label. So if you are 5A, you will get advice from the previous 5A, while your partner will receive advice from the previous 5B. 
+        </p>
+        <p>
+
+        After you receive this advice, you will be asked to make decisions over multiple rounds. In each round, you will each be asked to choose either action 1 or action 2.
+        </p>
+
+
+        {{ include C.INSTRUCTIONS_TEMPLATE }}
+    {{ endif }}
+
+    {{ next_button }}
+
+{{ endblock }}

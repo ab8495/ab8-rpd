@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+{% load index %}
+<html lang="en">
+<head>
+</head>
+<style>
+
+    table.fixed_header {
+        /* border-collapse: collapse; */
+        border-spacing: 0;
+    }
+    table.fixed_header tbody,
+    table.fixed_header thead {
+        display:block;
+    }
+    table.fixed_header thead tr th {
+        text-align: center;
+        height: 20px;
+        line-height: 20px;
+        border-top: 0.5px solid black;
+        border-bottom: 0.5px solid black;
+        font-size: 12px;
+        /*text-align: left;*/
+    }
+    .fixed_header tr:hover {
+        background-color: lightgray;
+    }
+    .fixed_header tbody {
+        height: 120px;
+        width: 361px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        border-bottom: none;
+    }
+    .fixed_header tbody {
+        border-top: 0.5px solid black;
+    }
+    .fixed_header td, thead th {
+        width: 57.208333px;
+        border-right: 0.5px solid black;
+    }
+    .fixed_header td:last-child, thead th:last-child {
+        border-right: 0.5px solid white;
+    }
+
+    .details {
+        box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.24), 0 5px 10px 0 rgba(0, 0, 0, 0.19);
+
+    }
+
+</style>
+<body>
+
+
+<table align=left class="fixed_header" id="table" style="margin-left:16px">
+    <thead>
+    <tr>
+        <th colspan="6" style="border-top:none"><h4 style="text-align: center;margin-top: 15px">  History for Match </h4></th>
+    </tr>
+    <tr>
+        <th rowspan="2">Round</th>
+        <th rowspan="2">My Choice</th>
+        <th rowspan="2">Other's Choice</th>
+    </tr>
+    </thead>
+    <tbody id="dataTable" style="border:none;width:247px">
+    {% for k,v in history.items %}
+            <tr class={{ k }}>
+            <td> {{ v.period }}</td>
+            <td> {{ v.name_action }}</td>
+            <td> {{ v.name_others_action }}</td>
+            </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+</body>
+<script>
+
+    $(function () {
+        $("#table tbody").each(function (elem, index) {
+            var arr = $.makeArray($("tr", this).detach());
+            $(this).append(arr);
+        });
+    });
+    let num = 1
+        $('.' + num).show();
+    $('.match' + num).show();
+    $("#choice").change(function () {
+        $("#table tbody tr").hide();
+        $('.match').hide();
+        $("#table tbody tr." + $(this).val()).show();
+        $('.match' + $(this).val()).show();
+
+    });
+
+    var $table = $('table.fixed_header'),
+        $bodyCells = $table.find('tbody tr:first').children(),
+        colWidth;
+
+    let elem_body = document.getElementById("dataTable");
+    elem_body.scrollTo(0, 50000);
+
+    // Get the tbody columns width array
+    colWidth = $bodyCells.map(function () {
+        return $(this).width();
+    }).get();
+
+
+
+</script>
+</html>

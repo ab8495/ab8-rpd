@@ -1,0 +1,35 @@
+
+<div class="card bg-light m-3">
+    <div class="card-body">
+    <p>
+        The points you can obtain in each round depend on your choice and the choice of the person you are paired with. The table below represents all the possible out-comes:
+    </p>
+    <p><i>In each cell, the amount to the left is the payoff for
+        you and to the right for the other participant.</i></p>
+
+    <table class='table table-bordered text-center'
+           style='width: auto; margin: auto'>
+        <tr>
+            <th colspan=2 rowspan=2></th>
+            <th colspan=2>The Other Participant's Choice</th>
+        </tr>
+        <tr>
+            <th>{{ C.C_TAG}}</th>
+            <th>{{ C.D_TAG}}</th>
+        </tr>
+        <tr>
+            <th rowspan=2><span style="transform: rotate(-90deg);">Your Choice</span></th>
+            <th>{{ C.C_TAG}}</th>
+            <td>{{ C.PAYOFF_CC }}, {{ C.PAYOFF_CC }}</td>
+            <td>{{ C.PAYOFF_CD }}, {{ C.PAYOFF_DC }}</td>
+        </tr>
+        <tr>
+            <th>{{ C.D_TAG}}</th>
+            <td>{{ C.PAYOFF_DC }}, {{ C.PAYOFF_CD }}</td>
+            <td>{{ C.PAYOFF_DD }}, {{ C.PAYOFF_DD }}</td>
+        </tr>
+    </table>
+    After each round, a random number between 1 and 100 is drawn. If the random number is greater than {{ delta }}, there will be no more rounds and you will progress to the next stage of the experiment.
+
+</div>
+</div>

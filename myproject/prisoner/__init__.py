@@ -4,7 +4,8 @@ import time
 import math
 import pickle
 import random
-
+from db.database import create_database_tables
+from db.crud import get_ancestor_players, add_player_history
 
 
 doc = """
@@ -29,20 +30,19 @@ class C(BaseConstants):
     NUM_ROUNDS = 300
     C_TAG = '1' # label for cooperation
     D_TAG = '2' # label for defection
-    num_gen = 2
+    num_gen = 1
     num_groups = 1
     PLAYERS_PER_GROUP = num_gen*2
-    delta = 50
+    delta = 0#50
     gamma = 1
     last_gen = False # change if last generation
     genfile = 'gen'
     groupfile = 'advice'
-    save = False # False if first generation, else True
     history = [{},
-                {'P1': {'period': '1', 'name_others_action': C_TAG, 'name_action': 'x'}},
-                {'P1': {'period': '1', 'name_others_action': D_TAG, 'name_action': 'x'}},
-                {'P1': {'period': '1', 'name_others_action': D_TAG, 'name_action': 'x'},
-                 'P2': {'period': '2', 'name_others_action': C_TAG, 'name_action': 'x'}}
+                #{'P1': {'period': '1', 'name_others_action': C_TAG, 'name_action': 'x'}},
+                #{'P1': {'period': '1', 'name_others_action': D_TAG, 'name_action': 'x'}},
+                #{'P1': {'period': '1', 'name_others_action': D_TAG, 'name_action': 'x'},
+                 #'P2': {'period': '2', 'name_others_action': C_TAG, 'name_action': 'x'}}
                     ] # questions for advice survey
 
 
@@ -55,13 +55,12 @@ class Subsession(BaseSubsession):
     match_number = models.IntegerField(initial=-10)
     period_number = models.IntegerField(initial=1)
     current_gen = models.IntegerField(initial=1)
-    gen0 = models.IntegerField(initial=0)
     current_parity = models.BooleanField()
-    first_gen = models.BooleanField(initial = True)
+    first_gen = models.BooleanField(initial = False)
     last_gen_num = models.IntegerField() # number of last generation
-    num_questions = models.IntegerField()
+    num_questions = models.IntegerField(initial = 0)
     delta = models.IntegerField(initial = C.delta)
-    payround = models.IntegerField(initial = 0)
+    payround = models.IntegerField(initial = 1)
     adviceround = models.IntegerField(initial = 0)
     rfirst = models.BooleanField(initial = False)
 
@@ -71,7 +70,6 @@ class Group(BaseGroup):
     gen = models.IntegerField()
 
 class Player(BasePlayer):
-    wait = models.BooleanField(initial = True) # waiting room
     # Game fields
     cum_payoff = models.CurrencyField(initial=0)
     final_period = models.BooleanField(initial = False) # ready to receive payoff, leave experiment
@@ -83,15 +81,17 @@ class Player(BasePlayer):
         widget=widgets.RadioSelect,
         initial= False,
     )
-    gen = models.IntegerField()
+    session_gen = models.IntegerField(initial = 1)
     decision = models.BooleanField(initial = False)
+    payround = models.IntegerField(initial = 0)
     # advice
-    r_advice = models.LongStringField(initial= '') # received advice
-    g_advice = models.LongStringField(label="What message would you like "
-                                            "to pass on to the participant "
-                                          "that will take over for you?")
+    ancestor_advice = models.LongStringField(label="Advice to you", default="")
+    ancestor_session_id = models.IntegerField(default=0)
+    ancestor_participant_id = models.IntegerField(default=0)
+    r_advice = models.LongStringField(default= '') # received advice
+    g_advice = models.LongStringField(initial = '',label="What message would you like to pass to the next participant?")
     # ID fields
-    side = models.BooleanField()
+    side = models.BooleanField(initial = False)
     stage = models.IntegerField(initial=-1)
     tag = models.StringField(initial = "")
     # Survey fields
@@ -106,97 +106,139 @@ class Player(BasePlayer):
 
 # FUNCTIONS
 def creating_session(subsession: Subsession):
+    nround = subsession.round_number # current round
+    ## ROLL Round incrementing
+
     # draw random number for each round
     seed = random.seed(a=None, version=2)
     random.seed(a=seed, version=2)
     dice_rolls = np.random.randint(1, 100, C.NUM_ROUNDS+1).tolist()
     subsession.session.vars['dice_rolls'] = dice_rolls
-    nround = subsession.round_number # current round
-    #prev_roll = dice_rolls[nround - 1]
-    roll = dice_rolls[nround]
+
     if C.last_gen:
         delta = 1-(1-C.delta)/(1+C.gamma)
     else:
         delta = C.delta
     num_gen = C.num_gen
-    subsession.delta = delta
-    if nround == 1: # initialize generation number
-        if C.save:
-            with open(C.genfile,'rb') as f:
-                gen = pickle.load(f)
-                f.close()
-        else:
-            gen = 1
-        gen0 = gen-1
-        period = 1
-    else: # update generation/period number
-        gen0 = subsession.in_round(nround - 1).gen0
-        if subsession.in_round(nround - 1).last_period: # new generation
-            period = 1
-            gen = subsession.in_round(nround - 1).current_gen + 1
-            subsession.first_period = True
-        else: # same generation
-            period = subsession.in_round(nround - 1).period_number + 1
-            gen = subsession.in_round(nround - 1).current_gen
-            subsession.first_period = False
-    last_gen_num = gen0 + num_gen # final generation in this session
+
+    roll = dice_rolls[nround]
     if roll > delta: # last period for generation
         subsession.last_period = True
-        #random.seed(a=roll, version=2)
-        #subsession.payround = np.random.randint(1, nround)
         subsession.rfirst = bool(random.getrandbits(1))
-        if gen >= last_gen_num:
+        if subsession.period_number > 1:
+            subsession.payround = np.random.randint(1,subsession.period_number)
+        if subsession.current_gen >= C.num_gen:
             subsession.stop_session = True
         else:
             subsession.stop_session = False
-    subsession.num_questions = len(C.history)
-    subsession.last_gen_num = last_gen_num
-    subsession.gen0 = gen0
-    subsession.period_number = period  # increments period number
-    subsession.current_gen = gen
-    subsession.first_gen = gen == 1
-    subsession.dice_roll = roll
 
 
-def setIDs(group: Group): # give players generations and sides, carry forward variable values
-    for p in group.get_players():
-        p.gen = np.ceil(p.id_in_group / 2) + p.subsession.gen0
-        p.side = p.id_in_group % 2 == 1
-        if p.side:
-            p.tag += "A"
-        else:
-            p.tag += "B"
-        if p.round_number != 1:
-            p.cum_payoff = p.in_round(p.round_number - 1).cum_payoff
-            p.stage = p.in_round(p.round_number - 1).stage
-            p.r_survey = p.in_round(p.round_number - 1).r_survey
-            p.wait = p.in_round(p.round_number - 1).wait
+    ## player advice/incrementing
+    # initialize roles and draw advice
+    players = subsession.get_players()
+    if nround == 1:
+        create_database_tables()
+        #subsession.group_randomly()
+        ancestor_session_id = subsession.session.config['ancestor_session_id']
+        ancestor_players = get_ancestor_players(ancestor_session_id)
+        # randomly assign groups, generations, dynasty
+        for group in subsession.get_groups():
+            gens = []
+            for i in range(1,C.num_gen+1):
+                gens = gens + [i, i]
+            random.shuffle(gens)
+            group_players = group.get_players()
+            for p, gen in zip(group_players, gens):
+                p.session_gen = gen
+            for gen in range(1,C.num_gen+1):
+                gen_players = [player for player in group_players if player.session_gen == gen]
+                random.shuffle(gen_players)
+                sides = [True, False]
+                for p, side in zip(gen_players, sides):
+                    p.side = side
+
+        # Pass advice in first round (with random ancestors)
+        for p in players:
+            p.participant.vars['interprets'] = []
+            p.participant.vars['r_advice'] = ''
+            p.participant.vars['g_advice'] = ''
+            p.participant.vars['match_history'] = {}
+            if p.session_gen == 1:
+                p.stage = 0 # indicate player is active
+                if p.session.config['gen_start']:
+                    # no advice
+                    subsession.first_gen = True
+                else:
+                    # Filter players by role
+                    #ancestor_role_players = [player for player in ancestor_players]
+                    # Randomly select a player one of the players that share the same role
+                    ancestor = random.choice(ancestor_players)
+                    # Remove the selected player from the list of ancestors
+                    ancestor_players.remove(ancestor)
+
+                    p.ancestor_session_id = ancestor_session_id
+                    p.ancestor_participant_id = ancestor.participant_id
+                    p.participant.vars['r_advice'] = ancestor.g_advice
+
+    # continue advice/ increment player attributes
+    if nround > 1:
+        # increment session generation attributes
+        if subsession.in_round(nround - 1).last_period:  # new generation
+            period = 1
+            gen = subsession.in_round(nround - 1).current_gen + 1
+            subsession.first_period = True
+        else:  # same generation
+            period = subsession.in_round(nround - 1).period_number + 1
+            gen = subsession.in_round(nround - 1).current_gen
+            subsession.first_gen = subsession.in_round(nround - 1).first_gen
+            subsession.first_period = False
+        subsession.period_number = period  # increments period number
+        subsession.current_gen = gen
+
+        for p in players:
+            p.side = p.in_round(nround - 1).side
+            p.session_gen = p.in_round(nround - 1).session_gen
+        #active_players = [player for player in players if player.session_gen == subsession.current_gen]
+        for p in players:
+            p.participant.vars['wait'] = False
+            if p.session_gen == subsession.current_gen: # Pass advice in later generations (inheritance already random from role)
+                p.stage = 0
+            if p.session_gen < p.subsession.current_gen:  # if retired, recall advice, survey generations, increment stage
+                p.stage = p.in_round(p.round_number - 1).stage + 1
+                if p.session_gen == 1:
+                    p.r_survey = False
+                else:
+                    if p.stage < p.subsession.num_questions:
+                        p.r_survey = p.rfirst
+                    else:
+                        p.r_survey = not p.rfirst
+            if p.session_gen > p.subsession.current_gen:
+                p.stage = -1
+                p.participant.vars['wait'] = True
             p.rfirst = p.in_round(p.round_number - 1).rfirst
             p.payround = p.in_round(p.round_number - 1).payround
-
-#def pass_advice(player: Player):
-#    for j in player.get_others_in_group():
-#        if player.side == j.side and player.gen == j.gen + 1:
-#            return player.g_advice
+    subsession.delta = delta
+    subsession.num_questions = len(C.history)
+    subsession.dice_roll = roll
 
 def opp(player: Player): # identify opponent
     for j in player.get_others_in_group():
-        if player.gen == j.gen:
+        if player.session_gen == j.session_gen:
             return j
 
 def pred(player: Player): # identify predecessor
     for j in player.get_others_in_group():
-        if player.gen == j.gen + 1 and player.side == j.side:
+        if player.session_gen == j.session_gen + 1 and player.side == j.side:
             return j
 
 def succ(player: Player): # identify successor
     for j in player.get_others_in_group():
-        if player.gen == j.gen - 1 and player.side == j.side:
+        if player.session_gen == j.session_gen - 1 and player.side == j.side:
             return j
 
 def sort_response(player: Player):
     N = player.subsession.num_questions
-    if player.gen == 1:
+    if player.session_gen == 1:
         player.g_responses = player.participant.vars['interprets'][0: N - 1]
     if player.rfirst:
         player.r_responses = player.participant.vars['interprets'][0: N - 1]
@@ -230,7 +272,9 @@ def set_payoffs(group: Group):
             #if p.round_number != 1:
             #    p.cum_payoff += + p.payoff
             #else:
-            p.cum_payoff = p.payoff
+            if p.subsession.last_period:
+                #payround = p.subsession.payround + p.round0
+                p.cum_payoff = p.payoff
 
 
         #p.participant.vars['pd_points'] += p.points
@@ -240,40 +284,13 @@ def set_payoffs(group: Group):
 
 # PAGES
 class Initialize(WaitPage):
-    @staticmethod
-    def after_all_players_arrive(group: Group):
-        setIDs(group)
-        id = group.id_in_subsession
-        for p in group.get_players():
-            if p.gen == p.subsession.current_gen: # active generation
-                p.stage = 0
-                p.wait = False
-            if p.gen < p.subsession.current_gen: # recall advice, survey generations increase 1 stage
-                p.r_advice = p.in_round(p.round_number - 1).r_advice
-                p.g_advice = p.in_round(p.round_number - 1).g_advice
-                p.stage += 1
-                if p.gen == 1:
-                    p.r_survey = False
-                else:
-                    if p.stage < p.subsession.num_questions:
-                        p.r_survey = p.rfirst
-                    else:
-                        p.r_survey = not p.rfirst
-            if p.gen > p.subsession.current_gen:
-                p.stage = -1
-            if p.subsession.period_number == 1:
-                p.participant.vars['match_history'] = {}
-                p.participant.vars['interprets'] = list()
-            # load saved advice
-            if group.subsession.current_gen > 1: # load/update advice
-                file = C.groupfile + str(id)
-                with open(file, 'rb') as f:
-                    advice1, advice2 = pickle.load(f)
-                if p.stage == 0:
-                    if p.side:
-                        p.r_advice = advice1
-                    else:
-                        p.r_advice = advice2
+    wait_for_all_groups = True
+
+    def vars_for_template(player: Player):
+        if player.session_gen > 1 and player.subsession.round_number > 1:
+            #player.r_advice = pred(player).in_round(player.subsession.round_number - 1).g_advice
+            player.ancestor_session_id = pred(player).session_id
+            player.ancestor_participant_id = pred(player).participant_id
 
 
 
@@ -281,22 +298,20 @@ class Introduction(Page):
     @staticmethod
     def is_displayed(player: Player):
         N = player.subsession.num_questions
-        return (player.subsession.first_period and player.stage == 0) or player.stage == 1 or player.stage == N-1
+        return (player.subsession.first_period and player.stage == 0) or player.stage == 1 or (player.stage == N+1 and not player.participant.vars['wait'])
     @staticmethod
     def vars_for_template(player: Player):
-        tag = str(player.subsession.current_gen)
+        tag = str(player.session_gen)
         if player.side:
             tag += 'A'
         else:
             tag += 'B'
         return {
             'first_period': player.subsession.first_period,
-            'gen0': player.subsession.gen0,
-            'wait': player.wait,
-            'history': player.participant.vars['match_history'],
-            'r_advice': player.r_advice,
+            'wait': player.participant.vars['wait'],
+            'r_advice': player.participant.vars['r_advice'],
             'gam_gen': player.subsession.current_gen,
-            'gen': player.gen,
+            'gen': player.session_gen,
             'first_gen': player.subsession.first_gen,
             'delta':player.subsession.delta,
             'tag': tag,
@@ -317,22 +332,23 @@ class Decision(Page):
         return player.stage == 0
     @staticmethod
     def vars_for_template(player: Player):
-        tag = str(player.subsession.current_gen)
+        tag = str(player.session_gen)
         if player.side:
             tag += 'A'
         else:
             tag += 'B'
+        #player.participant.vars['match_history']['P' + p.subsession.period_number] = {}
         return {
             'interprets': player.participant.vars['interprets'],
             'first_gen': player.subsession.first_gen,
             'first_period': player.subsession.first_period,
             'history': player.participant.vars['match_history'],
             'delta':player.subsession.delta,
-            'r_advice': player.r_advice,
+            'r_advice': player.participant.vars['r_advice'],
             'gam_gen': player.subsession.current_gen,
             'CTAG':C.C_TAG,
             'DTAG':C.D_TAG,
-            'gen': player.gen,
+            'gen': player.session_gen,
             'tag': tag,
             'round': player.subsession.round_number,
             'per': player.subsession.period_number,
@@ -344,7 +360,7 @@ class Survey(Page):
 
     @staticmethod
     def is_displayed(player: Player):
-        return player.stage > 0 and not player.wait
+        return player.stage > 0 and not player.participant.vars['wait']
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -353,13 +369,13 @@ class Survey(Page):
         question = (player.stage-1) % N
         r_survey = player.r_survey
         if r_survey:
-            advice = player.r_advice # r_advice survey
+            advice = player.participant.vars['r_advice'] # r_advice survey
         else:
-            advice = player.g_advice # g_advice survey
-        if question == N*2-2:
-            player.wait = True
-        if question == N-2 and (C.last_gen or player.gen == 1): # player done
-            player.wait = True
+            advice = player.participant.vars['g_advice'] # g_advice survey
+        if player.stage == N*2-1:
+            player.participant.vars['wait'] = True
+        if player.stage == N and (C.last_gen or player.session_gen == 1): # player done
+            player.participant.vars['wait'] = True
             if C.last_gen:
                 player.final_period = True
         historyq = history[question]
@@ -388,11 +404,11 @@ class ResultsWaitPage(WaitPage):
         N = group.subsession.num_questions
         for p in group.get_players():
             j = opp(p)
-            if p.stage > 0 and not p.wait: # active survey players
+            if p.stage > 0 and not p.participant.vars['wait']: # active survey players
                 hist = p.participant.vars['interprets']
                 p.participant.vars['interprets'] = [hist, p.interpret]
-            if p.stage > 0 and p.wait: # graduate inactive survey players once successor finishes r questions
-                if p.gen < p.subsession.last_gen_num: # not last generation
+            if p.stage > 0 and p.participant.vars['wait']: # graduate inactive survey players once successor finishes r questions
+                if p.session_gen < C.num_gen: # not last generation
                     j = succ(p)
                     if (j.stage >= N and j.rfirst) or (j.stage >= 2*N and not j.rfirst): # successor done questions on received advice
                         p.final_period = True
@@ -412,20 +428,19 @@ class ResultsWaitPage(WaitPage):
 
     @staticmethod
     def vars_for_template(player: Player):
-        tag = str(player.subsession.current_gen)
+        tag = str(player.session_gen)
         if player.side:
             tag += 'A'
         else:
             tag += 'B'
         match_list = []
-        advice = player.r_advice
+        advice = player.participant.vars['r_advice']
         return {
             'first_gen': player.subsession.first_gen,
             'first_period': player.subsession.first_period,
             'r_advice': advice,
-            'history': player.participant.vars['match_history'],
             'match_list': match_list,
-            'current_match': str(player.gen),
+            'current_match': str(player.session_gen),
             'tag': tag,
             'per': player.subsession.period_number,
             'opp': opp(player),
@@ -456,7 +471,8 @@ class Results(Page):
             last_per=player.subsession.last_period,
             delta=player.subsession.delta,
             first_period = False,
-            r_advice = player.r_advice,
+            r_advice = player.participant.vars['r_advice'],
+            g_advice=player.participant.vars['g_advice'],
             per= player.subsession.period_number,
             opp = opp(player),
             stage = player.stage,)
@@ -480,45 +496,47 @@ class EndOfMatch(Page):
             same_choice=player.cooperate == opponent.cooperate,
             my_decision=player.field_display('cooperate'),
             opponent_decision=opponent.field_display('cooperate'),
-            first_period = False,
+            first_period = player.subsession.first_period,
             history = player.participant.vars['match_history'],
             roll=player.subsession.dice_roll,
             delta=player.subsession.delta,
-            r_advice=player.r_advice,
+            r_advice=player.participant.vars['r_advice'],
             first_gen= player.subsession.first_gen,
             per= player.subsession.period_number,
-            stop=player.subsession.stop_session,)
+            stop=player.subsession.stop_session)
 
 # save progress
 class Save(WaitPage):
 
     @staticmethod
     def is_displayed(player: Player):
-        return player.subsession.last_period and not C.last_gen
+        return player.subsession.last_period
 
     @staticmethod
     def after_all_players_arrive(group: Group):
-        # save data for starting from next round
-        gen = group.subsession.current_gen + 1
-        with open(C.genfile, 'wb') as f:
-            pickle.dump(gen, f)
         for p in group.get_players():
             if p.stage == 0:
-                if p.side:
-                    advice1 = p.g_advice
-                else:
-                    advice2 = p.g_advice
-        id = group.id_in_subsession
-        file = C.groupfile + str(id)
-        # advice data
-        if group.subsession.current_gen <= C.num_gen:
-            with open(file, 'wb') as f:
-                pickle.dump([advice1, advice2], f)
-                f.close()
+                p.participant.vars['g_advice'] = p.g_advice
+                if not C.last_gen and p.session_gen < C.num_gen:
+                    succ(p).participant.vars['r_advice'] = p.g_advice
+
+
+class Save2(WaitPage):
+
+    @staticmethod
+    def is_displayed(player: Player):
+        return player.subsession.final_period
+
+    @staticmethod
+    def after_all_players_arrive(group: Group):
+        for p in group.get_players():
+            add_player_history(p)
+
+
 
 
 class EndOfGame(Page):
-    timeout_seconds = 15
+    #timeout_seconds = 15
     @staticmethod
     def is_displayed(player: Player):
         return player.final_period
@@ -527,24 +545,24 @@ class EndOfGame(Page):
     def vars_for_template(player: Player):
         opponent = opp(player)
         # points for interpreting received advice
-        if player.gen > player.subsession.gen0 + 1:
+        if player.session_gen > 1:
             rpoints = r_advice_score(player)
         else:
             rpoints = 0
         # points for interpreting given advice
-        if player.gen < player.subsession.gen0 + C.num_gen:
+        if player.session_gen < C.num_gen:
             gpoints = g_advice_score(player)
         else:
             gpoints = 0
         ipoints = gpoints + rpoints # payoff from interpreting
-        last_player = player.gen == player.subsession.last_gen_num
+        last_player = player.session_gen == C.num_gen
         return dict(
             opponent=opponent,
             same_choice=player.cooperate == opponent.cooperate,
             my_decision=player.field_display('cooperate'),
             opponent_decision=opponent.field_display('cooperate'),
             roll=player.subsession.dice_roll,
-            r_advice=player.r_advice,
+            r_advice=player.participant.vars['r_advice'],
             payoff=player.cum_payoff + ipoints,
             gen=player.subsession.current_gen,
             numgen= C.num_gen,
@@ -552,12 +570,15 @@ class EndOfGame(Page):
             rpoints= rpoints,
             ipoints = ipoints,
             last = last_player,
-            gen0=player.subsession.gen0,
             per=player.subsession.period_number,
             stop=player.subsession.stop_session,
         )
 
-page_sequence = [Initialize,Introduction,
+    @staticmethod
+    def app_after_this_page(player: Player, upcoming_apps):
+        add_player_history(player)
+
+page_sequence = [Initialize,#Introduction,
                  Decision, Survey, ResultsWaitPage, Results, EndOfMatch,
     #WaitingRoom
    Save, EndOfGame,]

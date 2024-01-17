@@ -505,27 +505,11 @@ class EndOfMatch(Page):
             per= player.subsession.period_number,
             stop=player.subsession.stop_session)
 
-# save progress
 class Save(WaitPage):
 
     @staticmethod
     def is_displayed(player: Player):
-        return player.subsession.last_period
-
-    @staticmethod
-    def after_all_players_arrive(group: Group):
-        for p in group.get_players():
-            if p.stage == 0:
-                p.participant.vars['g_advice'] = p.g_advice
-                if not C.last_gen and p.session_gen < C.num_gen:
-                    succ(p).participant.vars['r_advice'] = p.g_advice
-
-
-class Save2(WaitPage):
-
-    @staticmethod
-    def is_displayed(player: Player):
-        return player.subsession.final_period
+        return player.final_period
 
     @staticmethod
     def after_all_players_arrive(group: Group):
@@ -580,7 +564,6 @@ class EndOfGame(Page):
 
 page_sequence = [Initialize,#Introduction,
                  Decision, Survey, ResultsWaitPage, Results, EndOfMatch,
-    #WaitingRoom
    Save, EndOfGame,]
 
 

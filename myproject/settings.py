@@ -7,7 +7,7 @@ SESSION_CONFIGS = [
         app_sequence=['prisoner', 'payment_info'],
         num_demo_participants= 2, # num_groups*
         ancestor_session_id=1,
-        gen_start = False, # initial generation
+        gen_start = True, # initial generation
         gen_end = False, # final generation
     ),
     dict(

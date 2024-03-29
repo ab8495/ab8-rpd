@@ -1,4 +1,5 @@
-{{ block title }}Your Interpretation{{ endblock }}
+{{ block title }}Participant {{tag}}: Your Interpretation {{stage}}/{{num_q}}
+{{ endblock }}
 {{ block content }}
 {% block styles %}
 
@@ -8,7 +9,13 @@
             max-width: 100%
 
         }
-
+        .vertical-center {
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            -ms-transform: translateY(-50%);
+            transform: translateY(-50%);
+        }
         .advice {
             text-align:left;
             border:1px solid black;
@@ -28,17 +35,19 @@
             text-align: center;
             font-size: 125%;
         }
+        .btn-primary {
+            box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.24), 0 2px 6px 0 rgba(0, 0, 0, 0.19);}
 
         .btn-primary:hover {
             box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
         }
 
         .left {
-            width: 33%;
+            width: 50%;
         }
 
         .right {
-            width: 66%;
+            width: 50%;
         }
 
         h1 {
@@ -69,6 +78,12 @@
             font-weight: bold;
         }
 
+        input[type="radio"]{
+            border-radius: 50%;
+            outline: 3px solid #999;
+        }
+
+
         .empty {
             border: none;
         }
@@ -97,6 +112,30 @@
             width: 1px; /* edit this if you want */
             background-color: black
         }
+        .buttonC {
+            background-color: {{Cbutton_color}};
+            color: black;
+            border: 1px black;
+        }
+
+        .buttonD {
+            background-color: {{Dbutton_color}};
+            color: black;
+            border: 1px black;
+        }
+
+        .buttonC:hover {
+            background-color: {{Cbutton_hover}};
+        }
+
+        .buttonD:hover {
+            background-color: {{Dbutton_hover}};
+        }
+        span {
+            min-height: 100px;
+            display: inline-flex;
+            align-items: center;
+        }
         .noselect {
             -webkit-touch-callout: none; /* iOS Safari */
             -webkit-user-select: none; /* Safari */
@@ -110,77 +149,78 @@
 {% endblock %}
 
 <div style="padding-left:60px;padding-right:60px">
-    {{ if r }}
-        <p>
-            You received the following advice from your predecessor:
-        </p>
-    {{ else }}
-        <p>
-            You gave the following advice to your successor:
-        </p>
-    {{ endif }}
-        <div style = 'border:1px solid black;padding:20px;margin-bottom: 1px;height:100px;overflow:auto;' align="left">
-            <i>
-                {{advice}}
-            </i>
-        </div>
-        <div class="row" style = "height:240px;">
-        <div class="left">
-        {{ if first }}
-            <div align="left", style ="margin-top: 80px;">
-            Consider the choice in the first round (that is, with no previous rounds played).
-            </div>
-        {{ else }}
-            Consider the choice to be made after the following sequence of choices by the other participant:
-            <div align="center", style ="margin-top: 10px;">
+            <p><b>Scenario:</b></p>
+
+            {{ if first }}
+                <p>It is the first round of the experiment. </p>
+
+            {{ else }}
+                 <p>It is round {{round}} of the experiment. In previous rounds participant {{active_opp_tag}} has made the following choices:</p>
+            <div style ="margin-top: 1cm;" align="center">
                 {% include 'prisoner/surveyHistory.html' %}
             </div>
-        {{ endif }}
+                <p>
+                    In previous rounds you have acted according to your interpretation of the advice you received.
+                </p>
+            {{ endif }}
+    <div class="row" style = "height:400px;">
+        <div class="left"style ="margin-top: 1cm;">
+            {{ if r }}
+                 <p>
+                    You received the following message from participant {{pred_tag}}:
+                </p>
+            {{ else }}
+                <p>
+                    You gave the following message to participant {{succ_tag}}:
+                </p>
+            {{ endif }}
+            <div style = 'border:1px solid black;padding:20px;margin-bottom: 1px;height:100px;overflow:auto;' align="left">
+                <i>
+                    {{advice}}
+                </i>
+             </div>
         </div>
-        <div class = "right" style = "margin-top: 80px;">
-        <form>
-            <input type="radio" id="Yes" name="clear" value="True" required>
-            <label for="Yes">The advice is clear about what to do in this scenario.</label><br>
-            <input type="radio" id="No" name="clear" value="False" required>
-            <label for="No">The advice is NOT clear about what to do in this scenario.</label>
-        </form>
-        </div>
-        </div>
-    {{ if r }}
-        <p>
-            What do you think the advice instructs you to do in this scenario?
-        </p>
-    {{ else }}
-        <p>
-            What do you think the advice instructs your successor to do in this scenario?
-        </p>
-    {{ endif }}
-    <div class="form-group required">
+        <div class = "right" style = "margin-top: 2cm;">
+            <form>
+                <input type="radio" id="Yes" name="clear" value="True" required >
+                <label for="Yes"> The advice recommends a clear choice in this scenario.</label><br>
+                <input type="radio" id="No" name="clear" value="False" required>
+                <label for="No"> The advice does NOT recommend a clear choice in this scenario.</label>
+            </form>
+            <p style="margin-top:1cm">
+            Which choice does the advice recommend to {{ if r }}you{{ else }}participant {{ active_tag }}{{endif}} in round {{round}}?
+            </p>
+            <p>
+                If the advice is not clear, make your best guess.
+            </p>
+            <div class="form-group required">
         
 
-        <table class="table table-bordered text-center" style="width: auto; margin: auto">
-            <tr>
-                <th colspan="2" rowspan="2"></th>
-                <th colspan="2">The Other Participant's Choice</th>
-            </tr>
-            <tr>
-                <th>{{ C.C_TAG}}</th>
-                <th>{{ C.D_TAG}}</th>
-            </tr>
-            <tr>
-                <th rowspan="2"><span>Your Choice</span></th>
-                <td><button name="interpret" value="True" class="btn btn-primary btn-large">{{ C.C_TAG}}</button></td>
-                <td>{{C.PAYOFF_CC}}, {{C.PAYOFF_CC}}</td>
-                <td>{{ C.PAYOFF_CD }}, {{C.PAYOFF_DC}}</td>
-            </tr>
-            <tr>
-                <td><button name="interpret" value="False" class="btn btn-primary btn-large">{{ C.D_TAG}}</button></td>
-                <td>{{C.PAYOFF_DC}}, {{ C.PAYOFF_CD }}</td>
-                <td>{{C.PAYOFF_DD}}, {{C.PAYOFF_DD}}</td>
-            </tr>
-        </table>
+                <table class="table table-bordered text-center" style="width: auto; margin: auto">
+                    <tr>
+                        <th colspan="2" rowspan="2"> Round {{round}}</th>
+                        <th colspan="2">{{ active_opp_tag }}'s Choice</th>
+                    </tr>
+                    <tr>
+                        <th>{{ C.C_TAG}}</th>
+                        <th>{{ C.D_TAG}}</th>
+                    </tr>
+                    <tr>
+                        <th rowspan="2"><span>
+                            {{ if r }}Your Choice {{ else }} {{ active_tag }}'s Choice {{endif}}</span></th>
+                        <td><button name="interpret" value="True" class="btn btn-primary btn-large buttonC">{{ C.C_TAG}}</button></td>
+                        <td><b>{{C.PAYOFF_CC}}</b>, {{C.PAYOFF_CC}}</td>
+                        <td><b>{{ C.PAYOFF_CD }}</b>, {{C.PAYOFF_DC}}</td>
+                    </tr>
+                    <tr>
+                        <td><button name="interpret" value="False" class="btn btn-primary btn-large buttonD">{{ C.D_TAG}}</button></td>
+                        <td><b>{{C.PAYOFF_DC}}</b>, {{ C.PAYOFF_CD }}</td>
+                        <td><b>{{C.PAYOFF_DD}}</b>, {{C.PAYOFF_DD}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
     </div>
-</div>
 </div>
 
 {{ endblock }}

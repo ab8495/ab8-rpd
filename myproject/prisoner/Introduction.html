@@ -1,43 +1,57 @@
-{{ block title }}Introduction{{ endblock }}
+{{ block title }}Participant {{tag}}: Your Instructions{{ endblock }}
+{% block styles %}
+<style>
+        span {
+            min-height: 100px;
+            align-items: center;
+        }
+
+        .btn-primary {
+            box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.24), 0 2px 6px 0 rgba(0, 0, 0, 0.19);}
+
+        .btn-primary:hover {
+            box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+        }
+</style>
+{% endblock %}
+
 {{ block content }}
+{{if survey_instr}}
 
-    {{ if stage == 1}}
-        {{ include C.INSTRUCTIONS_SURVEY}}
-    {{ else }}
+{% include 'prisoner/instructions-survey.html'%}
+{{else}}
+
+            <p>
+                You have been assigned the label <b>{{ tag }}</b>. You have been paired with {{ opp_tag }}.
+        </p>
+                <p>
         {{ if first_gen }}
-            You are the first set of players. No advice is given.
+            You are the first set of participants. You receive no message from previous subjects.
         {{ else }}
-            You received the following advice from the previous player:
-
-            
+            You received the following message from participant {{ pred_tag }}:
             <div style = 'height:100px; border:1px solid black;padding:10px;margin-bottom: 1cm;overflow:auto;' align="left">
             <i>
                 {{r_advice}}
             </i>
             </div>
         {{ endif }}
+                </p>
         <div class="card bg-light m-3" >
             <div class="card-body">
 
             <h3>
-            Instructions
+            Reminder
             </h3>
-            <p>
-        You will randomly be assigned a label consisting of group number and a letter (either “A” or “B”). You will be paired with the other member of your group throughout the experiment. So if you are 5A, your partner will be 5B.
-        </p>
         <p>
-
-        Before any decisions are taken, you will receive advice from the previous participant to have your label. So if you are 5A, you will get advice from the previous 5A, while your partner will receive advice from the previous 5B. 
-        </p>
+            You will be asked to make choices over multiple rounds, but you will only receive points based on the choices you and participant {{opp_tag}} make in the final round.</p>
+                <p>You will not know whether a round is the final round until after you have made your choice for that round.
+                </p>
         <p>
-
-        After you receive this advice, you will be asked to make decisions over multiple rounds. In each round, you will each be asked to choose either action 1 or action 2.
-        </p>
-
-
-        {{ include C.INSTRUCTIONS_TEMPLATE }}
-    {{ endif }}
-
-    {{ next_button }}
-
+            After the last round, you will send advice to participant {{ succ_tag }}, while participant {{opp_tag}} sends advice to participant {{ succ_opp_tag }}.
+        </p><p>You will later receive points based on the choices made by participants {{ succ_tag }} and {{ succ_opp_tag }} in their final round.
+                </p>
+            </div>
+        </div>
+{{endif}}
+{{ next_button }}
 {{ endblock }}

@@ -2,9 +2,11 @@
 <div class="card bg-light m-3">
     <div class="card-body">
     <p>
-        The points you can obtain in each round depend on your choice and the choice of the person you are paired with. The table below represents all the possible out-comes:
+        The points you obtain in a round depend on your choice and the choice of the person you are paired with. You will earn future points based on the choices of your successor, and your partners successor.
+
+        The table below represents all the possible out-comes:
     </p>
-    <p><i>In each cell, the amount to the left is the payoff for
+    <p><i>In each cell, the amount to the left is the points for
         you and to the right for the other participant.</i></p>
 
     <table class='table table-bordered text-center'
@@ -29,7 +31,11 @@
             <td>{{ C.PAYOFF_DD }}, {{ C.PAYOFF_DD }}</td>
         </tr>
     </table>
+        <p>
     After each round, a random number between 1 and 100 is drawn. If the random number is greater than {{ delta }}, there will be no more rounds and you will progress to the next stage of the experiment.
-
-</div>
+        </p>
+        <p>
+            Only points earned in the last round will count towards your payment.
+        </p>
+    </div>
 </div>

@@ -1,4 +1,4 @@
-{{ block title }}Participant {{tag}}: Your Final Results{{ endblock }}
+{{ block title }}Results{{ endblock }}
 {{ block content }}
 <style>
 
@@ -27,12 +27,11 @@
         }
 
         .left {
-            width: 50%;
+            width: 33%;
         }
 
         .right {
-            width: 50%;
-            border-left: 2px solid black;
+            width: 66%;
         }
 
         h1 {
@@ -109,15 +108,8 @@
 
         {{ if last }}
             <p>
-                You will receive additional compensation based on the choices made by {{ succ_tag }} and {{ opp_succ_tag }} on a later date.
+                You will receive additional compensation based on the choices made by your successor on a later date.
             </p>
-        {{ endif }}
-
-        {{ if session_continue }}
-        <p>
-            Please click the button below before leaving the terminal.
-        </p>
-            {{ next_button }}
         {{ endif }}
     </p>
 </div>

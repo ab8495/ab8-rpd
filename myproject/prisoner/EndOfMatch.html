@@ -1,4 +1,4 @@
-{{ block title }}Results{{ endblock }}
+{{ block title }} Participant {{tag}}: Results{{ endblock }}
 {{ block content }}
 {% block styles %}
 
@@ -38,11 +38,12 @@
         }
 
         .left {
-            width: 33%;
+            width: 50%;
         }
 
         .right {
-            width: 66%;
+            width: 50%;
+            border-left: 2px solid black;
         }
 
         h1 {
@@ -72,6 +73,29 @@
             width: 60px;
             font-weight: bold;
         }
+
+        .btn-primary {
+            box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.24), 0 2px 6px 0 rgba(0, 0, 0, 0.19);}
+
+        .btn-primary:hover {
+            box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+        }
+
+
+        .buttonC {
+            background-color: {{Cbutton_color}};
+            color: black;
+            border: 1px black;
+        }
+
+        .buttonD {
+            background-color: {{Dbutton_color}};
+            color: black;
+            border: 1px black;
+        }
+
+
+        .no-click {pointer-events: none;}
 
         .empty {
             border: none;
@@ -115,21 +139,47 @@
 
 <div class="row">
   <div class="left">
-    {% include 'prisoner/left-info.html' %}
-  </div>
-  <div class="right">
     <p>
-        The game is over.
+        Please write some advice in the below box that will be passed on to participant {{ succ_tag }}.
+
     </p>
+      <p>
+          Remember that you will earn additional points based on their choices and the choices of participant {{ succ_opp_tag }} who will receive advice from participant {{opp_tag}}.
 
-    <p>
-        Below you can write a message that will be passed on to your following participant:
-
+          These points will be awarded based on the decisions made in their final round, according to the bold numbers in the below matrix:
+      </p>
+    <div class="form-group required">
+        <table class="table table-bordered text-center" style="width: auto; margin: auto">
+            <tr>
+                <th colspan="2" rowspan="2">Last Round</th>
+                <th colspan="2">{{ succ_opp_tag }}'s Choice</th>
+            </tr>
+            <tr>
+                <th>{{ C.C_TAG}}</th>
+                <th>{{ C.D_TAG}}</th>
+            </tr>
+            <tr>
+                <th rowspan="2"><span>{{succ_tag}}'s Choice</span></th>
+                <td><button name="cooperate" value="True" class="btn btn-large buttonC no-click">{{ C.C_TAG}}</button></td>
+                <td><b>{{C.PAYOFF_CC}}</b>, {{C.PAYOFF_CC}}</td>
+                <td><b>{{ C.PAYOFF_CD }}</b>, {{C.PAYOFF_DC}}</td>
+            </tr>
+            <tr>
+                <td><button name="cooperate" value="False" class="btn btn-large buttonD no-click">{{ C.D_TAG}}</button></td>
+                <td><b>{{C.PAYOFF_DC}}</b>, {{ C.PAYOFF_CD }}</td>
+                <td><b>{{C.PAYOFF_DD}}</b>, {{C.PAYOFF_DD}}</td>
+            </tr>
+        </table>
+    </div>
         {{ formfields }}
-    </p>
     <p>
         {{ next_button }}
     </p>
+
+  </div>
+  <div class="right">
+    {% include 'prisoner/left-info.html' %}
+
   </div>
 </div>
 {{ endblock }}

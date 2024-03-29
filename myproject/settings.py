@@ -6,9 +6,10 @@ SESSION_CONFIGS = [
         display_name="Prisoner",
         app_sequence=['prisoner', 'payment_info'],
         num_demo_participants= 2, # num_groups*
-        ancestor_session_id=1,
+        ancestor_session_id=1, # "1a,2b,3c,4d"
         gen_start = True, # initial generation
         gen_end = False, # final generation
+        dynasty_session = 1,
     ),
     dict(
         name='survey', app_sequence=['survey', 'payment_info'], num_demo_participants=1
@@ -36,12 +37,7 @@ REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = True
 
 ROOMS = [
-    dict(
-        name='econ101',
-        display_name='Econ 101 class',
-        participant_label_file='_rooms/econ101.txt',
-    ),
-    dict(name='live_demo', display_name='Room for live demo (no participant labels)'),
+    dict(name='cess', display_name='CESS'),
 ]
 
 

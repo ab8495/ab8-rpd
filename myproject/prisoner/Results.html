@@ -1,4 +1,4 @@
-{{ block title }}Results{{ endblock }}
+{{ block title }}Participant {{tag}}: Round {{ period }} Results{{ endblock }}
 {{ block content }}
 {% include 'prisoner/style.html' %}
 {% block styles %}
@@ -23,16 +23,36 @@
             font-size: 125%;
         }
 
+        .btn-primary {
+            box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.24), 0 2px 6px 0 rgba(0, 0, 0, 0.19);}
+
         .btn-primary:hover {
             box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
         }
 
+
+
+        .buttonC {
+            background-color: {{Cbutton_color}};
+            color: black;
+            border: 1px black;
+        }
+
+        .buttonD {
+            background-color: {{Dbutton_color}};
+            color: black;
+            border: 1px black;
+        }
+
+        .no-click {pointer-events: none;}
+
         .left {
-            width: 33%;
+            width: 50%;
         }
 
         .right {
-            width: 66%;
+            width: 50%;
+            border-left: 2px solid black;
         }
 
         h1 {
@@ -66,6 +86,8 @@
         .empty {
             border: none;
         }
+
+
 
         .fixed_table_info {
             table-layout:fixed;
@@ -104,28 +126,45 @@
 {% endblock %}
 <div class="row">
   <div class="left">
-    {% include 'prisoner/left-info.html'%}
-  </div>
-  <div class="right">
-    <p>
-        {{ if same_choice }}
-            Both of you chose {{ my_decision }}. As a result, you both earn <b>{{ player.payoff }}</b>.
-        {{ else }}
-            You chose {{ my_decision }} and the other participant chose {{ opponent_decision }}. As a result you earn <b>{{ player.payoff }}</b>, while the other participant
-             earns {{ opponent.payoff }}.
-        {{ endif }}
-        
-    </p>
-
+    <div class="form-group required">
+        <table class="table table-bordered text-center" style="width: auto; margin: auto">
+            <tr>
+                <th colspan="2" rowspan="2">Round {{period}}</th>
+                <th colspan="2">{{ opp_tag }}'s Choice</th>
+            </tr>
+            <tr>
+                <th {{ if opp_decision }}{{opp_color}}{{endif}}>{{ C.C_TAG}}</th>
+                <th {{ if not opp_decision }}{{opp_color}}{{endif}}>{{ C.D_TAG}}</th>
+            </tr>
+            <tr>
+                <th rowspan="2"><span>Your Choice</span></th>
+                <td {{ if my_decision }}{{my_color}}{{endif}}><button name="cooperate" value="True" class="btn btn-large buttonC no-click">{{ C.C_TAG}}</button></td>
+                <td {{ if my_decision }}{{if opp_decision}}{{outcome_color}}{{else}}{{my_color}}{{endif}}{{elif opp_decision}}{{opp_color}}{{endif}}><b>{{C.PAYOFF_CC}}</b>, {{C.PAYOFF_CC}}</td>
+                <td {{ if my_decision }}{{if opp_decision}}{{my_color}}{{else}}{{outcome_color}}{{endif}}{{elif not opp_decision}}{{opp_color}}{{endif}} ><b>{{ C.PAYOFF_CD }}</b>, {{C.PAYOFF_DC}}</td>
+            </tr>
+            <tr>
+                <td {{ if not my_decision }}{{my_color}}{{endif}}><button name="cooperate" value="False" class="btn btn-large buttonD no-click">{{ C.D_TAG}}</button></td>
+                <td {{ if not my_decision }}{{if opp_decision}}{{outcome_color}}{{else}}{{my_color}}{{endif}}{{elif opp_decision}}{{opp_color}}{{endif}}><b>{{C.PAYOFF_DC}}</b>, {{ C.PAYOFF_CD }}</td>
+                <td {{ if not my_decision }}{{if not opp_decision}}{{outcome_color}}{{else}}{{my_color}}{{endif}}{{elif not opp_decision}}{{opp_color}}{{endif}}><b>{{C.PAYOFF_DD}}</b>, {{C.PAYOFF_DD}}</td>
+            </tr>
+        </table>
+    </div>
+      <p>
+          Above is the outcome for this round.
+      </p>
     <p>
         The roll was {{ roll }}.
         {{ if last_per }}
-        This is more than {{ delta }}, so the game is over.
+        This is more than {{ delta }}, so this phase of the experiment is over.</p>
+      <p> You have earned <b>{{ player.payoff }}</b> from this portion of the experiment.
         {{ else }}
-        This is less than {{ delta }}, so you will play another round.
+        This is not more than {{ delta }}, so this phase of the experiment will last another round.
         {{ endif }}
     </p>
     {{ next_button }}
+  </div>
+  <div class="right">
+    {% include 'prisoner/left-info.html'%}
   </div>
 </div>
 {{ endblock }}

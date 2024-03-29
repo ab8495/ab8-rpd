@@ -30,7 +30,7 @@ Session = sessionmaker(bind=engine)
 # Create a base class for models
 Base = declarative_base()
 
-@staticmethod
+
 def create_database_tables():
     """ Conditionally create database tables if they don't already exist """
     # Prevents unnecessary sql statements from being executed if the tables already exist

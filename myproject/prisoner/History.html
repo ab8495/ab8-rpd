@@ -27,7 +27,7 @@
     }
     .fixed_header tbody {
         height: 120px;
-        width: 361px;
+        width: 360px;
         overflow-y: scroll;
         overflow-x: hidden;
         border-bottom: none;
@@ -36,7 +36,7 @@
         border-top: 0.5px solid black;
     }
     .fixed_header td, thead th {
-        width: 57.208333px;
+        width: 90px;
         border-right: 0.5px solid black;
     }
     .fixed_header td:last-child, thead th:last-child {
@@ -59,16 +59,24 @@
     </tr>
     <tr>
         <th rowspan="2">Round</th>
-        <th rowspan="2">My Choice</th>
-        <th rowspan="2">Other's Choice</th>
+        <th rowspan="2">Your Choice</th>
+        <th rowspan="2">{{opp_tag}}'s Choice</th>
     </tr>
     </thead>
-    <tbody id="dataTable" style="border:none;width:247px">
+    <tbody id="dataTable" style="border:none;width:270px">
     {% for k,v in history.items %}
             <tr class={{ k }}>
             <td> {{ v.period }}</td>
-            <td> {{ v.name_action }}</td>
-            <td> {{ v.name_others_action }}</td>
+                {{ if v.cooperate }}
+                    <td {{history_Ccolor }}> {{ v.name_action }}</td>
+                {{ else }}
+                    <td {{history_Dcolor }}> {{ v.name_action }}</td>
+                {{ endif }}
+                {{ if v.opp_cooperate }}
+                    <td {{history_Ccolor }}> {{ v.name_opp_action }}</td>
+                {{ else }}
+                    <td {{history_Dcolor }}> {{ v.name_opp_action }}</td>
+                {{ endif }}
             </tr>
     {% endfor %}
     </tbody>

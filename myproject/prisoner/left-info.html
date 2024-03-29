@@ -1,10 +1,10 @@
     {{ if first_gen }}
-    <p style ='margin-bottom: 2cm'>
-        You are the first set of players. No advice is given.
+    <p style ='margin-bottom: 1cm'>
+        You are the first set of subjects, and receive no message from previous subjects.
     </p>
     {{ else }}
     <p>
-        You received the following advice from your predecessor:
+        You received the following message from participant {{ pred_tag }}:
     </p>
     <div style = 'height:200px; border:1px solid black;padding:20px;margin-bottom: 1cm;overflow:auto;' align="left">
         <i>
@@ -12,15 +12,15 @@
         </i>
     </div>
     {{ endif }}
-{{ if first_period }}
-    <p class = "info">
-        This is your first round, there is no history.
-    </p>
-{{ else }}
-    <p>
-        In past rounds:
-    </p>
-        <div class="left" style="padding-left:60px">
+        {{ if first_period }}
+          <p class = "info">
+            This is your first round, there is no history.
+          </p>
+        {{ else }}
+          <p>
+            In previous rounds:
+          </p>
+          <div class="left" style="padding-left:60px">
             {% include 'prisoner/History.html' %}
-        </div>
-{{ endif }}
+          </div>
+        {{ endif }}

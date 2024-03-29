@@ -1,8 +1,19 @@
-{{ block title }}Results{{ endblock }}
+{{ extends 'otree/WaitPage.html' }}
+{{ block title }}Participant {{tag}}{{if stage == 0 }}: Round {{ period }}{{endif}}
+
+Please Wait{{ endblock }}
 {{ block content }}
 {% block styles %}
-
+{% include 'prisoner/style.html'%}
 <style>
+        .info {
+            margin-bottom: 3cm;
+        }
+        .advice {
+            text-align:left;
+            border:1px solid black;
+            border-padding:10px;
+        }
 
         .otree-body {
             max-width: 100%
@@ -10,7 +21,7 @@
         }
 
         .otree-title {
-            display: none;
+            text-align: center;
          }
 
         .fixed_table {
@@ -24,16 +35,28 @@
             font-size: 125%;
         }
 
-        .btn-primary:hover {
-            box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+
+        .buttonC {
+            background-color: {{Cbutton_color}};
+            color: black;
+            border: 1px black;
         }
 
+        .buttonD {
+            background-color: {{Dbutton_color}};
+            color: black;
+            border: 1px black;
+        }
+
+        .no-click {pointer-events: none;}
+
         .left {
-            width: 33%;
+            width: 50%;
         }
 
         .right {
-            width: 66%;
+            width: 50%;
+            border-left: 2px solid black;
         }
 
         h1 {
@@ -103,25 +126,39 @@
         }
     </style>
 {% endblock %}
-
+{{ if stage == 0 }}
 <div class="row">
   <div class="left">
-    You received the following advice from the previous player:
-
-    <p>
-        {{r_advice}}
-    </p>
-    <p>
-        In past rounds:
-    </p>
-    <div class="left" style="border-top: solid black 0.8px;border-right:solid black 1px;padding-left:30px">
-            {% include 'prisoner/History.html' %}
+    <div class="form-group required">
+        <table class="table table-bordered text-center" style="width: auto; margin: auto">
+            <tr>
+                <th colspan="2" rowspan="2">Round {{period}}</th>
+                <th colspan="2">{{ opp_tag }}'s Choice</th>
+            </tr>
+            <tr>
+                <th>{{ C.C_TAG}}</th>
+                <th>{{ C.D_TAG}}</th>
+            </tr>
+            <tr>
+                <th rowspan="2"><span>Your Choice</span></th>
+                <td {{ if my_decision }}{{my_color}}{{endif}}><button name="cooperate" value="True" class="btn btn-primary btn-large buttonC no-click">{{ C.C_TAG}}</button></td>
+                <td {{ if my_decision }}{{my_color}} {{endif}}><b>{{C.PAYOFF_CC}}</b>, {{C.PAYOFF_CC}}</td>
+                <td {{ if my_decision }}{{my_color}} {{endif}}><b>{{ C.PAYOFF_CD }}</b>, {{C.PAYOFF_DC}}</td>
+            </tr>
+            <tr {{ if not my_decision }}{{my_color }} {{endif}}>
+                <td><button name="cooperate" value="False" class="btn btn-primary btn-large buttonD no-click">{{ C.D_TAG}}</button></td>
+                <td><b>{{C.PAYOFF_DC}}</b>, {{ C.PAYOFF_CD }}</td>
+                <td><b>{{C.PAYOFF_DD}}</b>, {{C.PAYOFF_DD}}</td>
+            </tr>
+        </table>
     </div>
   </div>
   <div class="right">
-    <p>
-        Please wait for the other player to make their decision.
-    </p>
+    {% include 'prisoner/left-info.html'%}
   </div>
 </div>
+
+{{ endif }}
+
+
 {{ endblock }}

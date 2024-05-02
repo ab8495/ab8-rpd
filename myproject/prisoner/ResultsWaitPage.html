@@ -153,11 +153,13 @@ Please Wait{{ endblock }}
         </table>
     </div>
   </div>
-  <div class="right">
+  <div class="right" style="margin-bottom:50px" >
     {% include 'prisoner/left-info.html'%}
   </div>
 </div>
 
+{{ elif survey_instr }}
+{% include 'prisoner/instructions-survey.html'%}
 {{ endif }}
 
 

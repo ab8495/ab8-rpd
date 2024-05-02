@@ -156,12 +156,18 @@
         The roll was {{ roll }}.
         {{ if last_per }}
         This is more than {{ delta }}, so this phase of the experiment is over.</p>
-      <p> You have earned <b>{{ player.payoff }}</b> from this portion of the experiment.
+      <p> You have earned <b>{{ player.payoff }}</b> from this portion of the experiment. </p>
+    <button class="btn btn-primary btn-large">
+    Next
+</button>
         {{ else }}
-        This is not more than {{ delta }}, so this phase of the experiment will last another round.
+        This is not more than {{ delta }}, so this phase of the experiment will last another round.</p>
+
+    <button class="btn btn-primary btn-large">
+    Next round
+</button>
         {{ endif }}
-    </p>
-    {{ next_button }}
+
   </div>
   <div class="right">
     {% include 'prisoner/left-info.html'%}

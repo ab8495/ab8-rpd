@@ -1,13 +1,14 @@
 
 <div class="card bg-light m-3">
     <div class="card-body">
+            <h3>
+            Points Table
+            </h3>
     <p>
-        The points you obtain in a round depend on your choice and the choice of the person you are paired with. You will earn future points based on the choices of your successor, and your partners successor.
-
-        The table below represents all the possible out-comes:
+        The table below represents the points obtained by you and {{ opp_tag }} for each combination of choices:
     </p>
-    <p><i>In each cell, the amount to the left is the points for
-        you and to the right for the other participant.</i></p>
+    <p><i>In each cell, the first number is the points for
+        you and the second is the points for the other participant.</i></p>
 
     <table class='table table-bordered text-center'
            style='width: auto; margin: auto'>
@@ -22,20 +23,14 @@
         <tr>
             <th rowspan=2><span style="transform: rotate(-90deg);">Your Choice</span></th>
             <th>{{ C.C_TAG}}</th>
-            <td>{{ C.PAYOFF_CC }}, {{ C.PAYOFF_CC }}</td>
-            <td>{{ C.PAYOFF_CD }}, {{ C.PAYOFF_DC }}</td>
+            <td><b>{{ C.PAYOFF_CC }}</b>, {{ C.PAYOFF_CC }}</td>
+            <td><b>{{ C.PAYOFF_CD }}</b>, {{ C.PAYOFF_DC }}</td>
         </tr>
         <tr>
             <th>{{ C.D_TAG}}</th>
-            <td>{{ C.PAYOFF_DC }}, {{ C.PAYOFF_CD }}</td>
-            <td>{{ C.PAYOFF_DD }}, {{ C.PAYOFF_DD }}</td>
+            <td><b>{{ C.PAYOFF_DC }}</b>, {{ C.PAYOFF_CD }}</td>
+            <td><b>{{ C.PAYOFF_DD }}</b>, {{ C.PAYOFF_DD }}</td>
         </tr>
     </table>
-        <p>
-    After each round, a random number between 1 and 100 is drawn. If the random number is greater than {{ delta }}, there will be no more rounds and you will progress to the next stage of the experiment.
-        </p>
-        <p>
-            Only points earned in the last round will count towards your payment.
-        </p>
     </div>
 </div>

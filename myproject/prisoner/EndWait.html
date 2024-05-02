@@ -1,3 +1,4 @@
+{{ extends 'otree/WaitPage.html' }}
 {{ block title }}Participant {{tag}}: Your Final Results{{ endblock }}
 {{ block content }}
 <style>
@@ -105,20 +106,7 @@
 {{ block content }}
 <div class="row">
     <p>
-        You have finished the experiment. You have earned a total of {{ payoff }}, equivalent to <b>{{money_payoff}}</b>  (including your participation fee).
-
-        {{ if last }}
-            <p>
-                You will receive additional compensation based on the choices made by {{ succ_tag }} and {{ opp_succ_tag }} on a later date.
-            </p>
-            <p>
-                Your ID number is <b>{{ id }}</b>. Write this down on the form provided. You will need this to collect your compensation.
-            </p>
-        {{ endif }}
-
-        {{ if session_continue }}
-            {{ next_button }}
-        {{ endif }}
+        You have finished the experiment. You have earned a total of {{ payoff }} corresponding to <b>{{money_payoff}}</b> (including your participation fee).
     </p>
 </div>
 {{ endblock }}

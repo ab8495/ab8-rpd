@@ -2,15 +2,23 @@
     <div class="card-body">
 
     <h3>
-        {{ if rsurvey }} Received {{ else }} Given {{ endif }} Advice Survey Instructions
+        {{ if rsurvey }} Received {{ else }} Written {{ endif }} Advice Survey Instructions
     </h3>
         <p>
-            In your next task you will be asked to interpret the advice you {{ if rsurvey }}<b>received from participant {{pred_tag}}</b>{{else}}<b>gave</b> to participant {{succ_tag}}{{endif}},
+            In your next task you will be asked to interpret the advice you {{ if rsurvey }}<b>received</b> from participant {{pred_tag}}{{else}}<b>gave</b> to participant {{succ_tag}}{{endif}},
             and what choices it recommends in various scenarios.
         </p>
         <p>
             Participant {{ if rsurvey }}{{pred_tag}} has already provided{{else}}{{succ_tag}} will also provide{{endif}} their own interpretation of this advice.
-            For each scenario you both agree on, you will receive an additional {{ C.PAYOFF_I }}.
+            For each scenario you both agree on, you will receive an additional <b>{{ C.PAYOFF_I }}</b>.
+        </p>
+        <p>
+            A reminder that this advice was the following:
+            <div style = 'border:1px solid black;padding:20px;margin-bottom: 1px;height:100px;overflow:auto;' align="left">
+                <i>
+                    {{ advice }}
+                </i>
+             </div>
         </p>
 </div>
 </div>

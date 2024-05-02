@@ -13,7 +13,7 @@ def add_player_history(player):
         group = player.group.number,
         choice=player.cooperate,
         g_advice=player.g_advice,
-        g_survey='1',
+        g_survey=player.g_responses,
         gen=player.gen,
         DynastyGroup = player.subsession.dynasty_session,
         #final=player.final_period,

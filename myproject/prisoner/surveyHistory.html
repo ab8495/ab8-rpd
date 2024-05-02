@@ -4,14 +4,15 @@
 <head>
 </head>
 <style>
-
+    tr{
+        height = 40px;
+        }
     table.fixed_header {
         /* border-collapse: collapse; */
         border-spacing: 0;
     }
     table.fixed_header tbody,
     table.fixed_header thead {
-        display:block;
     }
     table.fixed_header thead tr th {
         text-align: center;
@@ -26,7 +27,7 @@
         background-color: lightgray;
     }
     .fixed_header tbody {
-        height: 120px;
+        height: 30px;
         width: 361px;
         overflow-y: scroll;
         overflow-x: hidden;
@@ -63,9 +64,9 @@
         <th rowspan="2">{{active_opp_tag}}'s Choice</th>
     </tr>
     </thead>
-    <tbody id="dataTable" style="border:none;width:247px">
+    <tbody id="dataTable" style="border:none;width:247px;height:auto">
     {% for k,v in history.items %}
-            <tr class={{ k }}>
+            <tr class={{ k }} height="30px">
             <td> {{ v.period }}</td>
                 {{ if v.opp_cooperate }}
                     <td {{history_Ccolor }}> {{ v.name_opp_action }}</td>

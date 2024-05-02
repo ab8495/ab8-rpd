@@ -26,9 +26,9 @@
         </p>
                 <p>
         {{ if first_gen }}
-            You are the first set of participants. You receive no message from previous subjects.
+            You are the first set of participants. You receive no advice from previous subjects.
         {{ else }}
-            You received the following message from participant {{ pred_tag }}:
+            You received the following advice from participant {{ pred_tag }}:
             <div style = 'height:100px; border:1px solid black;padding:10px;margin-bottom: 1cm;overflow:auto;' align="left">
             <i>
                 {{r_advice}}
@@ -36,22 +36,7 @@
             </div>
         {{ endif }}
                 </p>
-        <div class="card bg-light m-3" >
-            <div class="card-body">
-
-            <h3>
-            Reminder
-            </h3>
-        <p>
-            You will be asked to make choices over multiple rounds, but you will only receive points based on the choices you and participant {{opp_tag}} make in the final round.</p>
-                <p>You will not know whether a round is the final round until after you have made your choice for that round.
-                </p>
-        <p>
-            After the last round, you will send advice to participant {{ succ_tag }}, while participant {{opp_tag}} sends advice to participant {{ succ_opp_tag }}.
-        </p><p>You will later receive points based on the choices made by participants {{ succ_tag }} and {{ succ_opp_tag }} in their final round.
-                </p>
-            </div>
-        </div>
+{% include 'prisoner/instructions.html'%}
 {{endif}}
 {{ next_button }}
 {{ endblock }}

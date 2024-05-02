@@ -4,14 +4,13 @@
 <head>
 </head>
 <style>
-
+    table{table-layout: fixed;}
     table.fixed_header {
         /* border-collapse: collapse; */
         border-spacing: 0;
     }
     table.fixed_header tbody,
     table.fixed_header thead {
-        display:block;
     }
     table.fixed_header thead tr th {
         text-align: center;
@@ -26,8 +25,7 @@
         background-color: lightgray;
     }
     .fixed_header tbody {
-        height: 120px;
-        width: 360px;
+        height: 30px;
         overflow-y: scroll;
         overflow-x: hidden;
         border-bottom: none;
@@ -36,7 +34,6 @@
         border-top: 0.5px solid black;
     }
     .fixed_header td, thead th {
-        width: 90px;
         border-right: 0.5px solid black;
     }
     .fixed_header td:last-child, thead th:last-child {
@@ -52,20 +49,20 @@
 <body>
 
 
-<table align=left class="fixed_header" id="table" style="margin-left:16px">
+<table align=center class="fixed_header" id="table" style="width:240px;overflow:auto;">
     <thead>
     <tr>
-        <th colspan="6" style="border-top:none"><h4 style="text-align: center;margin-top: 15px">  History for Match </h4></th>
+        <th colspan="3" style="border-top:none"><h4 style="text-align: center;margin-top: 15px">  History for Match </h4></th>
     </tr>
     <tr>
-        <th rowspan="2">Round</th>
-        <th rowspan="2">Your Choice</th>
-        <th rowspan="2">{{opp_tag}}'s Choice</th>
+        <th rowspan="1",style="width:20%">Round</th>
+        <th rowspan="1",style="width:40%">Your Choice</th>
+        <th rowspan="1",style="width:40%">{{opp_tag}}'s Choice</th>
     </tr>
     </thead>
-    <tbody id="dataTable" style="border:none;width:270px">
+    <tbody id="dataTable" style="width:100%">
     {% for k,v in history.items %}
-            <tr class={{ k }}>
+            <tr class={{ k }} height="40px">
             <td> {{ v.period }}</td>
                 {{ if v.cooperate }}
                     <td {{history_Ccolor }}> {{ v.name_action }}</td>

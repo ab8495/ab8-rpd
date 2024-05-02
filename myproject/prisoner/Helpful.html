@@ -1,4 +1,4 @@
-{{ block title }}Participant {{tag}}: Your Interpretation {{stage}}/{{num_q}}
+{{ block title }}Participant {{tag}}
 {{ endblock }}
 {{ block content }}
 {% block styles %}
@@ -150,42 +150,11 @@ h2 {
         }
     </style>
 {% endblock %}
-
-<div style="padding-left:60px;padding-right:60px">
-    <div class='row' style = 'border:1px solid black;padding:20px;margin-bottom: 1px;height:auto;width:800px;margin:0 auto;'>
-        <h2 align="center"><b>Scenario: </b></h2>
-
-        {{ if first }}
-
-        <p align="center"> It is the first round of the experiment.</p>
-
-        {{ else }}
-        <div class="left">
-            <p>It is round {{round}} of the experiment. In previous rounds, participant {{active_opp_tag}} has made the choices shown on the right:</p>
-
-
-            <p>
-                Assume that {{if r}} you have {{else}} participant {{active_tag}} has{{endif}} acted according to your interpretation of the advice in previous rounds.
-            </p>
-        </div>
-        <div class = "right">
-            <div align="center">
-                {% include 'prisoner/surveyHistory.html' %}
-            </div>
-        </div>
-        {{ endif }}
-    </div>
     <div class="row" style = "height:400px;">
         <div class="left" style ="margin-top: 1cm;">
-            {{ if r }}
                  <p>
                     You received the following advice from participant {{pred_tag}}:
                 </p>
-            {{ else }}
-                <p>
-                    You gave the following advice to participant {{succ_tag}}:
-                </p>
-            {{ endif }}
             <div style = 'border:1px solid black;padding:20px;margin-bottom: 1px;height:100px;overflow:auto;' align="left">
                 <i>
                     {{advice}}
@@ -193,11 +162,16 @@ h2 {
              </div>
         </div>
         <div class = "right" style = "margin-top: 1cm;">
+            <p> How much did this advice affect your decisions? </p>
             <form>
-                <input type="radio" id="Yes" name="clear" value="True" required >
-                <label for="Yes"> The advice recommends a clear choice for {{ if r }}you{{ else }}participant {{ active_tag }}{{endif}} in this scenario.</label><br>
+                <input type="radio" id="Very" name="clear" value="2" required >
+                <label for="Very"> I would always follow the advice when making my decisions. </label><br>
+                <input type="radio" id="Very" name="clear" value="2" required >
+                <label for="Very"> The advice affected my decisions. </label><br>
                 <input type="radio" id="No" name="clear" value="False" required>
-                <label for="No"> The advice does NOT recommend a clear choice for {{ if r }}you{{ else }}participant {{ active_tag }}{{endif}} in this scenario.</label>
+                <label for="No"> The advice suggested choices that I would've made anyways.</label>
+                <input type="radio" id="Little" name="clear" value="1" required >
+                <label for="Little"> I ignored the advice while making my decisions. </label><br>
             </form>
             <p style = "margin-top: 0.3cm;">
                 Which choice does the advice suggest for {{ if r }}you{{ else }}participant {{ active_tag }}{{endif}} to take in round {{round}}?
@@ -205,7 +179,7 @@ h2 {
                 If the advice is not clear, make your best guess.
             </p>
             <div class="form-group required">
-        
+
 
                 <table class="table table-bordered text-center" style="width: auto; margin: auto">
                     <tr>

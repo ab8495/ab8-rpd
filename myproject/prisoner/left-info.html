@@ -17,10 +17,12 @@
             This is your first round, there is no history.
           </p>
         {{ else }}
-          <p>
-            In previous rounds:
-          </p>
-          <div class="left" style="padding-left:60px">
-            {% include 'prisoner/History.html' %}
-          </div>
+            {{ if history != []}}
+                <p>
+                    In previous rounds:
+                </p>
+                <div class="left" style="padding-left:60px">
+                    {% include 'prisoner/History.html' %}
+                </div>
+            {{ endif }}
         {{ endif }}

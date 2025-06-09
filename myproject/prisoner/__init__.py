@@ -1,6 +1,8 @@
 from otree.api import *
 import numpy as np
 import random
+
+import prisoner
 from db.database import create_database_tables
 from db.crud import get_ancestor_players, add_player_history
 
@@ -24,13 +26,13 @@ class C(BaseConstants):
     PAYOFF_DC = 100
     PAYOFF_DD = 35
     PAYOFF_I = cu(5) # interpretation payoff
-    NUM_ROUNDS = 80
+    NUM_ROUNDS = 50
     C_TAG = '1' # label for cooperation
     D_TAG = '2' # label for defection
-    num_gen = 2
-    num_dynasty = 3
+    num_gen = 1
+    num_dynasty = 1
     PLAYERS_PER_GROUP = num_gen*2
-    delta = 0
+    delta = 50
     gamma = 1
     inactive_color = ["#FAE5CB", "#CBE6FA"]
     active_color = ["SandyBrown","LightSkyBlue"]
@@ -59,6 +61,8 @@ class Subsession(BaseSubsession):
     delta = models.IntegerField(initial = C.delta)
     stop_session = models.BooleanField(initial = False)
     dynasty_session = models.IntegerField(initial = -1)
+    payoff_round = models.IntegerField(initial = -1)
+    round = models.IntegerField(initial = -1)
 
 
 class Group(BaseGroup):
@@ -75,6 +79,11 @@ class Player(BasePlayer):
         widget=widgets.RadioSelect,
         initial= False,
     )
+    react = models.BooleanField(
+        choices=[[True, C.C_TAG], [False, C.D_TAG]],
+        doc="""This player's decision""",
+        widget=widgets.RadioSelect,
+        initial= False,)
     session_gen = models.IntegerField(initial = 1)
     gen = models.IntegerField(initial = 1)
     # advice
@@ -101,25 +110,33 @@ def creating_session(subsession: Subsession):
     nround = subsession.round_number # current round
     ## ROLL Round incrementing
 
-    # draw random number for each round
-    seed = random.seed(a=None, version=2)
-    random.seed(a=seed, version=2)
-    dice_rolls = np.random.randint(1, 101, C.NUM_ROUNDS+1).tolist()
-    subsession.session.vars['dice_rolls'] = dice_rolls
-
     if subsession.session.config['gen_end']:
         delta = 1-(1-C.delta)/(1+C.gamma)
     else:
         delta = C.delta
 
-    roll = dice_rolls[nround]
-    if roll > delta: # last period for generation
-        subsession.last_period = True
-        if subsession.current_gen >= C.num_gen:
-            subsession.stop_session = True
-        else:
-            subsession.stop_session = False
+    # draw random number for each round
+    seed = random.seed(a=None, version=2)
+    random.seed(a=seed, version=2)
+    extra_rounds = C.num_dynasty*2+len(C.history) # accounts for survey question rounds
+    dice_rolls = np.random.randint(1, 101, C.NUM_ROUNDS+1).tolist()
+    while sum(i > delta for i in dice_rolls[0:(C.NUM_ROUNDS-len(C.history)-extra_rounds)]) <= C.num_dynasty-1:
+        dice_rolls = np.random.randint(1, 101, C.NUM_ROUNDS+1).tolist()
+    subsession.session.vars['dice_rolls'] = dice_rolls
 
+    roll = -1
+    if nround == 1:
+        subsession.period_number = 1
+        subsession.round = 1
+        roll = dice_rolls[1]
+    else:
+        if subsession.in_round(nround-1).last_period:
+            subsession.period_number = 1
+        else:
+            subsession.period_number = subsession.in_round(nround-1).period_number + 1
+            subsession.round = subsession.in_round(nround-1).round + 1
+            if subsession.period_number == 3:
+                subsession.round = subsession.round - 1
 
     ## player advice/incrementing
     # initialize roles and draw advice
@@ -148,7 +165,7 @@ def creating_session(subsession: Subsession):
                 dynasty_ages[dynasty] = age
             for n in range(num_groups,C.num_dynasty):
                 long_dynasties = [i for i in range(0,len(dynasties)) if dynasty_ages[i] == max(dynasty_ages)] # maximum length dynasties
-                excess = min(long_dynasties) # dynasties to remove
+                excess = max(long_dynasties) # dynasties to remove
                 dynasties.remove(dynasties[excess]) # remove first dynasty reaching this value
                 dynasty_ages.remove(dynasty_ages[excess])
             ancestor_players = [ancestor for ancestor in ancestors if ancestor.dynasty in dynasties]
@@ -192,6 +209,7 @@ def creating_session(subsession: Subsession):
                         ancestor = random.choice(ancestor_options)
                         ancestor_options.remove(ancestor)
                         p.gen = ancestor.gen + 1
+                        p.side = ancestor.side
                         get_tag(p)
                         p.ancestor_participant_id = ancestor.participant_id
                         if ancestor.g_advice == '':
@@ -217,6 +235,17 @@ def creating_session(subsession: Subsession):
                     get_tag(p)
     # continue advice/ increment player attributes
     subsession.num_questions = len(C.history)
+    subsession.payoff_round = nround
+    if subsession.period_number != 2 and nround >= 3:
+        roll = dice_rolls[nround - 1]
+        roll1 = -1
+        if subsession.period_number == 3:
+            roll1 = subsession.in_round(nround -2).dice_roll
+        if roll1 > delta or roll > delta:
+            subsession.last_period = True
+            if roll1 > delta:
+                subsession.payoff_round = nround - 2
+
     if nround > 1:
         subsession.group_like_round(1)
         for g in subsession.get_groups():
@@ -224,14 +253,11 @@ def creating_session(subsession: Subsession):
             g.number = g.in_round(nround - 1).number
         # increment session generation attributes
         if subsession.in_round(nround - 1).last_period:  # new generation
-            period = 1
             gen = subsession.in_round(nround - 1).current_gen + 1
             subsession.first_period = True
         else:  # same generation
-            period = subsession.in_round(nround - 1).period_number + 1
             gen = subsession.in_round(nround - 1).current_gen
             subsession.first_period = False
-        subsession.period_number = period  # increments period number
         subsession.current_gen = gen
 
         for p in players:
@@ -402,25 +428,36 @@ class Introduction(Page):
             'succ_opp_tag':successor_tag(get_opponent(player)),
             'stage':player.stage,
             'round': player.subsession.round_number,
-            'per': player.subsession.period_number,
+            'per': player.subsession.round,
             'last_gen':C.num_gen,
             'end2':(player.session_gen == C.num_gen),
             'end':player.session_end,
             'payI': C.PAYOFF_I,
         }
 
-class Decision(Page):
+class React(Page):
     form_model = 'player'
-    form_fields = ['cooperate']
-
+    form_fields = ['react']
 
     @staticmethod
     def is_displayed(player: Player):
-        return player.stage == 0
+        return player.stage == 0 and (player.subsession.period_number == 2 or player.subsession.period_number == 3)
     @staticmethod
     def vars_for_template(player: Player):
-        #player.participant.vars['match_history']['P' + p.subsession.period_number] = {}
+        n = player.subsession.round_number
+        scenario = player.subsession.period_number - 1
+        if scenario == 1:
+            p_cooperate = player.in_round(n-1).cooperate
+            opp_cooperate = True
+            #history = {'P1': {'period': '1', 'cooperate':p_cooperate, 'name_action': player.in_round(n-1).action,
+                            #'opp_cooperate':opp_cooperate,'name_opp_action': 1}}
+        else:
+            p_cooperate = player.in_round(n-2).cooperate
+            opp_cooperate = False
+            #history = {'P1': {'period': '1', 'cooperate':p_cooperate, 'name_action': player.in_round(n-1).action,
+                            #'opp_cooperate':opp_cooperate,'name_opp_action': 2}}
         return {
+            'round_number': player.subsession.round_number,
             'history_Ccolor': "style=\"background-color:"+C.history_color[True]+"\"",
             'history_Dcolor': "style=\"background-color:"+C.history_color[False]+"\"",
             'Dbutton_color': C.button_color[False],
@@ -429,12 +466,18 @@ class Decision(Page):
             'Cbutton_hover': C.hover_color[True],
             'session_end':player.session_end,
             'group': player.group,
-            'period': player.subsession.period_number,
+            'version':scenario,
+            'my_decision':p_cooperate,
+            'opp_cooperate':opp_cooperate,
+            'my_color':"style=\"background:"+C.inactive_color[p_cooperate]+";\"",
+            'opp_color':"style=\"background:"+C.inactive_color[opp_cooperate]+";\"",
+            'outcome_color':"style=\"background:"+C.outcome_color[opp_cooperate]+";\"",
+            'period': player.subsession.round,
             'interprets': player.participant.vars['interprets'],
             'asurvey': player.participant.vars['asurvey'],
             'first_gen': player.first_gen,
             'first_period': player.subsession.first_period,
-            'history': player.participant.vars['match_history'],
+            'history': [],
             'delta':player.subsession.delta,
             'r_advice': player.participant.vars['r_advice'],
             'gam_gen': player.subsession.current_gen,
@@ -445,30 +488,43 @@ class Decision(Page):
             'tag': player.participant.vars['tag'],
             'opp_tag':get_opponent(player).participant.vars['tag'],
             'round': player.subsession.round_number,
-            'per': player.subsession.period_number,
             'session':player.session_id,
         }
 
 
-class Helpful(Page):
+class Decision(Page):
     form_model = 'player'
-    form_fields = ['helpful']
-
+    form_fields = ['cooperate']
     @staticmethod
     def is_displayed(player: Player):
-        return player.stage % (player.subsession.num_questions+1) == 1
-
-
+        return player.stage == 0 and (player.subsession.period_number != 2 and player.subsession.period_number != 3)
     @staticmethod
     def vars_for_template(player: Player):
-        if player.r_survey:
-            advice = player.participant.vars['r_advice'] # r_advice survey
-        else:
-            advice = player.participant.vars['g_advice'] # g_advice survey
         return {
-            'advice': advice,
-            'r': player.r_survey,
+            'round_number': player.subsession.round_number,
+            'history_Ccolor': "style=\"background-color:"+C.history_color[True]+"\"",
+            'history_Dcolor': "style=\"background-color:"+C.history_color[False]+"\"",
+            'Dbutton_color': C.button_color[False],
+            'Cbutton_color': C.button_color[True],
+            'Dbutton_hover': C.hover_color[False],
+            'Cbutton_hover': C.hover_color[True],
+            'period': player.subsession.round,
+            'interprets': player.participant.vars['interprets'],
+            'asurvey': player.participant.vars['asurvey'],
+            'first_gen': player.first_gen,
+            'first_period': player.subsession.first_period,
+            'history': player.participant.vars['match_history'],
+            'delta':player.subsession.delta,
+            'r_advice': player.participant.vars['r_advice'],
+            'CTAG':C.C_TAG,
+            'DTAG':C.D_TAG,
+            'pred_tag': predecessor_tag(player),
+            'tag': player.participant.vars['tag'],
+            'opp_tag':get_opponent(player).participant.vars['tag'],
+            'session':player.session_id,
         }
+
+
 
 class Survey(Page):
     form_model = 'player'
@@ -533,32 +589,61 @@ class Survey(Page):
     def before_next_page(player, timeout_happened):
         player.participant.vars['interprets'].append(player.interpret)
 
+class Results1WaitPage(WaitPage):
+    @staticmethod
+    def is_displayed(subsession: Subsession):
+        return subsession.period_number == 3
+
+    @staticmethod
+    def after_all_players_arrive(subsession: Subsession):
+        n = subsession.round_number
+        for group in subsession.get_groups():
+            for p in group.get_players():
+                opp = get_opponent(p)
+                p.cooperate = p.react
+                if opp.in_round(n-2).cooperate:
+                    p.cooperate = p.in_round(n-1).react
+
+
+
 class ResultsWaitPage(WaitPage):
     wait_for_all_groups = True
     template_name = 'prisoner/ResultsWaitPage.html'
     @staticmethod
+    def is_displayed(player: Player):
+        return player.subsession.period_number != 2
+    @staticmethod
     def after_all_players_arrive(subsession: Subsession):
         for group in subsession.get_groups():
+            n = subsession.round_number
+            if group.subsession.period_number == 3:
+                for p in group.get_players():
+                    opp = get_opponent(p)
+                    p.cooperate = p.react
+                    if opp.in_round(n - 2).cooperate:
+                        p.cooperate = p.in_round(n - 1).react
+
             set_payoffs(group)
-            period_number = str(group.subsession.period_number)
+            round = str(group.subsession.round)
             N = group.subsession.num_questions
             for p in group.get_players():
                 if p.participant.vars['done']:
                     continue
-                j = get_opponent(p)
                 if p.stage < 0:
                     continue
                 if p.stage == 0: # active players
+                    opp = get_opponent(p)
                     if p.cooperate:
                         p.action = C.C_TAG
-                    if j.cooperate:
-                        j.action = C.C_TAG
-                    p.participant.vars['match_history']['P' + period_number] = {
-                            'period': period_number,
+                    if opp.cooperate:
+                        opp.action = C.C_TAG
+                    if p.subsession.round_number <= p.subsession.payoff_round:
+                        p.participant.vars['match_history']['P' + round] = {
+                            'period': round,
                             'cooperate':p.cooperate,
                             'name_action': p.action,
-                            'opp_cooperate':j.cooperate,
-                            'name_opp_action': j.action
+                            'opp_cooperate':opp.cooperate,
+                            'name_opp_action': opp.action
                         }
                     if p.subsession.last_period and p.session_gen>1:
                         predecessor = get_predecessor(p)
@@ -630,7 +715,7 @@ class ResultsWaitPage(WaitPage):
             'rsurvey':player.r_survey,
             'survey_instr': (player.stage == 0 or player.stage == player.subsession.num_questions),
             'advice':advice,
-            'period': player.subsession.period_number,
+            'period': player.subsession.round,
             'final': player.final_period,
             'stage': player.stage,
             'end': player.session_end,
@@ -638,7 +723,6 @@ class ResultsWaitPage(WaitPage):
             'first_period': player.subsession.period_number==1,
             'r_advice': advice,
             'current_match': str(player.session_gen),
-            'per': player.subsession.period_number,
             'pred_tag': predecessor_tag(player),
             'tag': player.participant.vars['tag'],
             'opp_tag': opp.participant.vars['tag'],
@@ -648,21 +732,63 @@ class ResultsWaitPage(WaitPage):
         }
 
 
-
-class Results(Page):
+class Results1(Page):
     @staticmethod
     def is_displayed(player: Player):
-        return player.stage == 0
+        return player.stage == 0 and player.subsession.period_number == 3
 
     @staticmethod
     def vars_for_template(player: Player):
         opponent = get_opponent(player)
+        n = player.subsession.round_number-2 # first round
+        return dict(
+            payoff_round = player.subsession.payoff_round,
+            round_number = player.subsession.round_number,
+            opponent=opponent,
+            same_choice=player.in_round(n).cooperate == opponent.in_round(n).cooperate,
+            period = player.subsession.round,
+            my_decision=player.in_round(n).cooperate,
+            opp_decision=opponent.in_round(n).cooperate,
+            roll = player.subsession.in_round(n).dice_roll,
+            history = player.participant.vars['match_history'],
+            history_Ccolor = "style=\"background-color:"+C.history_color[True]+"\"",
+            history_Dcolor = "style=\"background-color:"+C.history_color[False]+"\"",
+            Dbutton_color= C.active_color[False],
+            Cbutton_color= C.active_color[True],
+            my_color="style=\"background:"+C.inactive_color[player.in_round(n).cooperate]+";\"",
+            opp_color="style=\"background:"+C.inactive_color[opponent.in_round(n).cooperate]+";\"",
+            outcome_color="style=\"background:"+C.outcome_color[opponent.in_round(n).cooperate]+";\"",
+            tag = player.participant.vars['tag'],
+            opp_tag = get_opponent(player).participant.vars['tag'],
+            pred_tag = predecessor_tag(player),
+            first_gen= player.first_gen,
+            last_per=player.subsession.last_period,
+            delta=player.subsession.delta,
+            first_period = False,
+            r_advice = player.participant.vars['r_advice'],
+            g_advice=player.participant.vars['g_advice'],
+            per= player.subsession.round,
+            opp = get_opponent(player),
+            stage = player.stage,)
+
+
+class Results(Page):
+    @staticmethod
+    def is_displayed(player: Player):
+        return player.stage == 0 and player.subsession.period_number >= 3 and player.subsession.payoff_round != player.subsession.round_number - 2
+
+    @staticmethod
+    def vars_for_template(player: Player):
+        opponent = get_opponent(player)
+        p_cooperate = player.cooperate
+        opp_cooperate = opponent.cooperate
+
         return dict(
             opponent=opponent,
-            same_choice=player.cooperate == opponent.cooperate,
-            period = player.subsession.period_number,
-            my_decision=player.cooperate,
-            opp_decision=opponent.cooperate,
+            same_choice=p_cooperate == opp_cooperate,
+            period = player.subsession.round,
+            my_decision=p_cooperate,
+            opp_decision=opp_cooperate,
             roll = player.subsession.dice_roll,
             history = player.participant.vars['match_history'],
             history_Ccolor = "style=\"background-color:"+C.history_color[True]+"\"",
@@ -681,7 +807,6 @@ class Results(Page):
             first_period = False,
             r_advice = player.participant.vars['r_advice'],
             g_advice=player.participant.vars['g_advice'],
-            per= player.subsession.period_number,
             opp = get_opponent(player),
             stage = player.stage,)
 
@@ -706,6 +831,8 @@ class EndOfMatch(Page):
         #player.in_all_rounds().g_advice = player.g_advice
         player.participant.vars['last_round'] = player.subsession.round_number
         return dict(
+            roll=player.subsession.dice_roll,
+            round = player.subsession.round_number,
             history_Ccolor = "style=\"background-color:"+C.history_color[True]+"\"",
             history_Dcolor = "style=\"background-color:"+C.history_color[False]+"\"",
             Dbutton_color= C.active_color[False],
@@ -723,11 +850,10 @@ class EndOfMatch(Page):
             opponent_decision=opponent.field_display('cooperate'),
             first_period = False,
             history = player.participant.vars['match_history'],
-            roll=player.subsession.dice_roll,
             delta=player.subsession.delta,
             r_advice=player.participant.vars['r_advice'],
             first_gen= player.first_gen,
-            per= player.subsession.period_number,)
+            per= player.subsession.round,)
 
 
     @staticmethod
@@ -795,6 +921,8 @@ class EndOfGame(Page):
         player.participant.vars['done'] = True
         # points for interpreting received advice
         return dict(
+            roll=player.subsession.dice_roll,
+            round = player.subsession.round_number,
             asurvey =player.participant.vars['asurvey'],
             opp_tag = get_opponent(player).participant.vars['tag'],
             tag = player.participant.vars['tag'],
@@ -806,7 +934,6 @@ class EndOfGame(Page):
             same_choice=player.cooperate == opponent.cooperate,
             my_decision=player.field_display('cooperate'),
             opponent_decision=opponent.field_display('cooperate'),
-            roll=player.subsession.dice_roll,
             r_advice=player.participant.vars['r_advice'],
             payoff=player.participant.payoff,
             money_payoff = player.participant.payoff_plus_participation_fee(),
@@ -819,7 +946,7 @@ class EndOfGame(Page):
             rpoints= player.participant.vars['rpoints'],
             dynasty = player.group.dynasty,
             last = (player.session_end and not player.session.config['gen_end']),
-            per=player.subsession.period_number,
+            per=player.subsession.round,
             session=player.session_id,
             id = player.session.id,
         )
@@ -861,15 +988,15 @@ class EndWait(WaitPage):
             rpoints= player.participant.vars['rpoints'],
             dynasty = player.group.dynasty,
             last = (player.session_end and not player.session.config['gen_end']),
-            per=player.subsession.period_number,
+            per=player.subsession.round,
             session=player.session_id,
             id=str(player.participant.id)+str(player.side),
         )
 
 page_sequence = [Introduction,
-                 Decision, #Helpful,
+                 Decision, React,
                  Survey,
-                 ResultsWaitPage,
+                 ResultsWaitPage, Results1,
                   Results, EndOfMatch,
    SaveLocal,SaveSession,EndOfGame, EndWait]
 

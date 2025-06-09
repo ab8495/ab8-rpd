@@ -9,7 +9,7 @@ def add_player_history(player):
         session_id=player.session.id,
         dynasty=player.group.dynasty,
         participant_id=player.participant.id,
-        tag=player.tag,
+        side=player.side,
         group = player.group.number,
         choice=player.cooperate,
         g_advice=player.g_advice,

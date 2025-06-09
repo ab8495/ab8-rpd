@@ -1,20 +1,8 @@
-{{ extends 'otree/WaitPage.html' }}
-{{ block title }}Participant {{tag}}{{if stage == 0}}: Round {{ period }}{{endif}}
-
-Please Wait{{ endblock }}
+{{ block title }}Participant {{tag}}: Round 1 Results{{ endblock }}
 {{ block content }}
+{% include 'prisoner/style.html' %}
 {% block styles %}
-{% include 'prisoner/style.html'%}
 <style>
-        .info {
-            margin-bottom: 3cm;
-        }
-        .advice {
-            text-align:left;
-            border:1px solid black;
-            border-padding:10px;
-        }
-
         .otree-body {
             max-width: 100%
 
@@ -34,6 +22,14 @@ Please Wait{{ endblock }}
             text-align: center;
             font-size: 125%;
         }
+
+        .btn-primary {
+            box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.24), 0 2px 6px 0 rgba(0, 0, 0, 0.19);}
+
+        .btn-primary:hover {
+            box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+        }
+
 
 
         .buttonC {
@@ -91,6 +87,8 @@ Please Wait{{ endblock }}
             border: none;
         }
 
+
+
         .fixed_table_info {
             table-layout:fixed;
             height:130px;
@@ -126,9 +124,6 @@ Please Wait{{ endblock }}
         }
     </style>
 {% endblock %}
-{{ if stage == 0 and period > 2 }}
-<div class="row">
-  <div class="left">
     <div class="form-group required">
         <table class="table table-bordered text-center" style="width: auto; margin: auto">
             <tr>
@@ -136,31 +131,38 @@ Please Wait{{ endblock }}
                 <th colspan="2">{{ opp_tag }}'s Choice</th>
             </tr>
             <tr>
-                <th>{{ C.C_TAG}}</th>
-                <th>{{ C.D_TAG}}</th>
+                <th {{ if opp_decision }}{{opp_color}}{{endif}}>{{ C.C_TAG}}</th>
+                <th {{ if not opp_decision }}{{opp_color}}{{endif}}>{{ C.D_TAG}}</th>
             </tr>
             <tr>
                 <th rowspan="2"><span>Your Choice</span></th>
-                <td {{ if my_decision }}{{my_color}}{{endif}}><button name="cooperate" value="True" class="btn btn-primary btn-large buttonC no-click">{{ C.C_TAG}}</button></td>
-                <td {{ if my_decision }}{{my_color}} {{endif}}><b>{{C.PAYOFF_CC}}</b>, {{C.PAYOFF_CC}}</td>
-                <td {{ if my_decision }}{{my_color}} {{endif}}><b>{{ C.PAYOFF_CD }}</b>, {{C.PAYOFF_DC}}</td>
+                <td {{ if my_decision }}{{my_color}}{{endif}}><button name="cooperate" value="True" class="btn btn-large buttonC no-click">{{ C.C_TAG}}</button></td>
+                <td {{ if my_decision }}{{if opp_decision}}{{outcome_color}}{{else}}{{my_color}}{{endif}}{{elif opp_decision}}{{opp_color}}{{endif}}><b>{{C.PAYOFF_CC}}</b>, {{C.PAYOFF_CC}}</td>
+                <td {{ if my_decision }}{{if opp_decision}}{{my_color}}{{else}}{{outcome_color}}{{endif}}{{elif not opp_decision}}{{opp_color}}{{endif}} ><b>{{ C.PAYOFF_CD }}</b>, {{C.PAYOFF_DC}}</td>
             </tr>
-            <tr {{ if not my_decision }}{{my_color }} {{endif}}>
-                <td><button name="cooperate" value="False" class="btn btn-primary btn-large buttonD no-click">{{ C.D_TAG}}</button></td>
-                <td><b>{{C.PAYOFF_DC}}</b>, {{ C.PAYOFF_CD }}</td>
-                <td><b>{{C.PAYOFF_DD}}</b>, {{C.PAYOFF_DD}}</td>
+            <tr>
+                <td {{ if not my_decision }}{{my_color}}{{endif}}><button name="cooperate" value="False" class="btn btn-large buttonD no-click">{{ C.D_TAG}}</button></td>
+                <td {{ if not my_decision }}{{if opp_decision}}{{outcome_color}}{{else}}{{my_color}}{{endif}}{{elif opp_decision}}{{opp_color}}{{endif}}><b>{{C.PAYOFF_DC}}</b>, {{ C.PAYOFF_CD }}</td>
+                <td {{ if not my_decision }}{{if not opp_decision}}{{outcome_color}}{{else}}{{my_color}}{{endif}}{{elif not opp_decision}}{{opp_color}}{{endif}}><b>{{C.PAYOFF_DD}}</b>, {{C.PAYOFF_DD}}</td>
             </tr>
         </table>
     </div>
-  </div>
-  <div class="right" style="margin-bottom:50px" >
-    {% include 'prisoner/left-info.html'%}
-  </div>
-</div>
+      <p>
+          Above is the outcome from round 1.
+      </p>
+    <p>
+        The roll in round 1 was {{ roll }}.
+        {{ if roll > delta }}
+        This is more than {{ delta }}, so the experiment ended in round 1. </p>
+      <p> This phase of the experiment is over. You have earned <b>{{ player.payoff }}</b> from this portion of the experiment. </p>
+    <button class="btn btn-primary btn-large">
+    Next
+</button>
+        {{ else }}
+        This is not more than {{ delta }}, so the experiment lasted another round.</p>
 
-{{ elif survey_instr }}
-{% include 'prisoner/instructions-survey.html'%}
-{{ endif }}
-
-
+    <button class="btn btn-primary btn-large">
+    See round 2.
+</button>
+        {{ endif }}
 {{ endblock }}

@@ -12,7 +12,7 @@ class PlayerHistory(Base):
     #last_gen = Column(Boolean),
     dynasty = Column(Integer)
     DynastyGroup = Column(Integer)
-    tag = Column(String)
+    side = Column(Boolean)
     choice = Column(Boolean)
     gen = Column(Integer)
     g_advice = Column(String)

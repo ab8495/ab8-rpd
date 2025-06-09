@@ -5,7 +5,7 @@ SESSION_CONFIGS = [
         name='prisoner',
         display_name="Prisoner",
         app_sequence=['prisoner', 'payment_info'],
-        num_demo_participants= 4, # num_groups*
+        num_demo_participants= 2, # num_groups*
         gen_end = False, # final generation
         dynasty_session = 1,
     ),
@@ -23,7 +23,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     real_world_currency_per_point=0.10, participation_fee=14.00, doc=""
 )
 
-PARTICIPANT_FIELDS = ['match_history','interprets']
+PARTICIPANT_FIELDS = ['tag','rpoints','rsurvey','gsurvey','g_advice','r_advice','match_history']
 SESSION_FIELDS = []
 
 # ISO-639 code

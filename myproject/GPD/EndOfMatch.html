@@ -140,13 +140,11 @@
 <div class="row">
   <div class="left">
     <p>
-        Please write some advice in the below box that will be passed on to participant {{ succ_tag }}.
+        Please write some advice in the box below that will be passed on to participant {{ succ_tag }}.
 
     </p>
       <p>
-          Remember that you will earn additional points based on their choices and the choices of participant {{ succ_opp_tag }} who will receive advice from participant {{opp_tag}}.
-
-          These points will be awarded based on the decisions made in their final round, according to the bold numbers in the below matrix:
+          Their choices will earn you additional points. They will be paired with {{ succ_opp_tag }} who will receive advice from participant {{opp_tag}}.
       </p>
     <div class="form-group required">
         <table class="table table-bordered text-center" style="width: auto; margin: auto">
@@ -178,7 +176,7 @@
 
   </div>
   <div class="right">
-    {% include 'prisoner/left-info.html' %}
+    {% include 'GPD/left-info.html' %}
 
   </div>
 </div>

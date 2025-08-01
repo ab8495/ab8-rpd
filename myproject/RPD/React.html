@@ -1,7 +1,7 @@
-{{ block title }}Participant {{tag}}: Round {{ period }} Scenario {{version}} {{ endblock }}
+{{ block title }} Round {{ period }} Scenario {{version}} {{ endblock }}
 {{ block content }}
 {% block styles %}
-{% include 'prisoner/style.html'%}
+{% include 'RPD/style.html'%}
 <style>
         .info {
             margin-bottom: 3cm;
@@ -141,17 +141,14 @@
         <h2 align="center"><b>Scenario: </b></h2>
         <div class = "left">
             <p>
-                Suppose the other participant chose <b>{{ version }}</b> in the first round, leading to the outcome on the right, which action would you like to take in round 2?
-            </p>
-            <p>
-                If the other participant chose {{ version }} in round 1, your response will be your choice in round 2.
+                If the other participant chose <b>{{ version }}</b> in the first round, leading to the outcome on the right, which option would you choose in the second round?
             </p>
         </div>
         <div class = "right">
             <table class="table table-bordered text-center" style="width: auto; margin: auto">
                 <tr>
                     <th colspan="2" rowspan="2">Round 1</th>
-                    <th colspan="2">{{ opp_tag }}'s Choice</th>
+                    <th colspan="2">Other's Choice</th>
                 </tr>
                 <tr>
                     <th {{ if opp_cooperate }}{{opp_color}}{{endif}}>{{ C.C_TAG}}</th>
@@ -172,10 +169,7 @@
         </div>
     </div>
 <div class="row" style = "margin-top: 1cm;">
-  <div class="left">
-    {% include 'prisoner/left-info.html'%}
-  </div>
-  <div class="right">
+  <div class="center">
       <p>
           Choose which choice to make in round 2 of this scenario:
       </p>
@@ -183,7 +177,7 @@
         <table class="table table-bordered text-center" style="width: auto; margin: auto">
             <tr>
                 <th colspan="2" rowspan="2">Round {{period}}</th>
-                <th colspan="2">{{ opp_tag }}'s Choice</th>
+                <th colspan="2">Other's Choice</th>
             </tr>
             <tr>
                 <th>{{ C.C_TAG}}</th>

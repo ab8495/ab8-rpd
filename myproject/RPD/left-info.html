@@ -1,0 +1,14 @@
+        {{ if first_period }}
+          <p class = "info">
+            This is a new match, there is no history yet.
+          </p>
+        {{ else }}
+            {{ if history != []}}
+                <p>
+                    In previous rounds:
+                </p>
+                <div class="left" style="padding-left:60px">
+                    {% include 'RPD/History.html' %}
+                </div>
+            {{ endif }}
+        {{ endif }}

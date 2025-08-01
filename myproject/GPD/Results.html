@@ -1,6 +1,6 @@
-{{ block title }}Participant {{tag}}: Round 1 Results{{ endblock }}
+{{ block title }}Participant {{tag}}: Round {{ period }} Results{{ endblock }}
 {{ block content }}
-{% include 'prisoner/style.html' %}
+{% include 'GPD/style.html' %}
 {% block styles %}
 <style>
         .otree-body {
@@ -124,6 +124,8 @@
         }
     </style>
 {% endblock %}
+<div class="row">
+  <div class="left">
     <div class="form-group required">
         <table class="table table-bordered text-center" style="width: auto; margin: auto">
             <tr>
@@ -148,21 +150,27 @@
         </table>
     </div>
       <p>
-          Above is the outcome from round 1.
+          Above is the outcome for Round {{ period }}.
       </p>
     <p>
-        The roll in round 1 was {{ roll }}.
-        {{ if roll > delta }}
-        This is more than {{ delta }}, so the experiment ended in round 1. </p>
-      <p> This phase of the experiment is over. You have earned <b>{{ player.payoff }}</b> from this portion of the experiment. </p>
+        The roll for this round was {{ roll }}.
+        {{ if last_per }}
+        This is more than {{ delta }}, so the match is terminated.</p>
+      <p> You have earned <b>{{ player.payoff }}</b> from this portion of the experiment. </p>
     <button class="btn btn-primary btn-large">
     Next
 </button>
         {{ else }}
-        This is not more than {{ delta }}, so the experiment lasted another round.</p>
+        This is not more than {{ delta }}, so this phase of the experiment will last another round.</p>
 
     <button class="btn btn-primary btn-large">
-    See round 2.
+    Next round
 </button>
         {{ endif }}
+
+  </div>
+  <div class="right">
+    {% include 'GPD/left-info.html'%}
+  </div>
+</div>
 {{ endblock }}

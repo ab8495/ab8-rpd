@@ -1,7 +1,10 @@
-{{ block title }}Participant {{tag}}: Round {{ period }} Choice{{ endblock }}
+{{ extends 'otree/WaitPage.html' }}
+{{ block title }}Round {{ period }}
+
+Please Wait{{ endblock }}
 {{ block content }}
 {% block styles %}
-{% include 'prisoner/style.html'%}
+{% include 'RPD/style.html'%}
 <style>
         .info {
             margin-bottom: 3cm;
@@ -33,13 +36,6 @@
         }
 
 
-        .btn-primary {
-            box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.24), 0 2px 6px 0 rgba(0, 0, 0, 0.19);}
-
-        .btn-primary:hover {
-            box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
-        }
-
         .buttonC {
             background-color: {{Cbutton_color}};
             color: black;
@@ -52,13 +48,7 @@
             border: 1px black;
         }
 
-        .buttonC:hover {
-            background-color: {{Cbutton_hover}};
-        }
-
-        .buttonD:hover {
-            background-color: {{Dbutton_hover}};
-        }
+        .no-click {pointer-events: none;}
 
         .left {
             width: 50%;
@@ -136,14 +126,14 @@
         }
     </style>
 {% endblock %}
-
+{{ if period > 2 }}
 <div class="row">
   <div class="left">
     <div class="form-group required">
         <table class="table table-bordered text-center" style="width: auto; margin: auto">
             <tr>
                 <th colspan="2" rowspan="2">Round {{period}}</th>
-                <th colspan="2">{{ opp_tag }}'s Choice</th>
+                <th colspan="2">Other's Choice</th>
             </tr>
             <tr>
                 <th>{{ C.C_TAG}}</th>
@@ -151,25 +141,23 @@
             </tr>
             <tr>
                 <th rowspan="2"><span>Your Choice</span></th>
-                <td><button name="cooperate" value="True" class="btn btn-primary btn-large buttonC">{{ C.C_TAG}}</button></td>
-                <td><b>{{C.PAYOFF_CC}}</b>, {{C.PAYOFF_CC}}</td>
-                <td><b>{{ C.PAYOFF_CD }}</b>, {{C.PAYOFF_DC}}</td>
+                <td {{ if my_decision }}{{my_color}}{{endif}}><button name="cooperate" value="True" class="btn btn-primary btn-large buttonC no-click">{{ C.C_TAG}}</button></td>
+                <td {{ if my_decision }}{{my_color}} {{endif}}><b>{{C.PAYOFF_CC}}</b>, {{C.PAYOFF_CC}}</td>
+                <td {{ if my_decision }}{{my_color}} {{endif}}><b>{{ C.PAYOFF_CD }}</b>, {{C.PAYOFF_DC}}</td>
             </tr>
-            <tr>
-                <td><button name="cooperate" value="False" class="btn btn-primary btn-large buttonD">{{ C.D_TAG}}</button></td>
+            <tr {{ if not my_decision }}{{my_color }} {{endif}}>
+                <td><button name="cooperate" value="False" class="btn btn-primary btn-large buttonD no-click">{{ C.D_TAG}}</button></td>
                 <td><b>{{C.PAYOFF_DC}}</b>, {{ C.PAYOFF_CD }}</td>
                 <td><b>{{C.PAYOFF_DD}}</b>, {{C.PAYOFF_DD}}</td>
             </tr>
         </table>
     </div>
-      <p style="margin-top: 1cm;">
-          Please choose one of the above options.
-      </p>
   </div>
-  <div class="right">
-    {% include 'prisoner/left-info.html'%}
+  <div class="right" style="margin-bottom:50px" >
+    {% include 'RPD/left-info.html'%}
   </div>
 </div>
+{{ endif }}
 
 
 {{ endblock }}

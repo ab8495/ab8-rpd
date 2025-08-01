@@ -4,7 +4,7 @@
 Please Wait{{ endblock }}
 {{ block content }}
 {% block styles %}
-{% include 'prisoner/style.html'%}
+{% include 'GPD/style.html'%}
 <style>
         .info {
             margin-bottom: 3cm;
@@ -154,12 +154,12 @@ Please Wait{{ endblock }}
     </div>
   </div>
   <div class="right" style="margin-bottom:50px" >
-    {% include 'prisoner/left-info.html'%}
+    {% include 'GPD/left-info.html'%}
   </div>
 </div>
 
 {{ elif survey_instr }}
-{% include 'prisoner/instructions-survey.html'%}
+{% include 'GPD/instructions-survey.html'%}
 {{ endif }}
 
 

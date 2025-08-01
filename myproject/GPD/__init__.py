@@ -2,7 +2,7 @@ from otree.api import *
 import numpy as np
 import random
 
-import prisoner
+import GPD
 from db.database import create_database_tables
 from db.crud import get_ancestor_players, add_player_history
 
@@ -18,9 +18,9 @@ payoffs.
 # survey
 
 class C(BaseConstants):
-    NAME_IN_URL = 'prisoner'
-    INSTRUCTIONS_TEMPLATE = 'prisoner/instructions.html'
-    INSTRUCTIONS_SURVEY = 'prisoner/instructions-survey.html'
+    NAME_IN_URL = 'GPD'
+    INSTRUCTIONS_TEMPLATE = 'GPD/instructions.html'
+    INSTRUCTIONS_SURVEY = 'GPD/instructions-survey.html'
     PAYOFF_CC = 65
     PAYOFF_CD = 10
     PAYOFF_DC = 100
@@ -30,9 +30,9 @@ class C(BaseConstants):
     C_TAG = '1' # label for cooperation
     D_TAG = '2' # label for defection
     num_gen = 1
-    num_dynasty = 1
+    num_dynasty = 5
     PLAYERS_PER_GROUP = num_gen*2
-    delta = 50
+    delta = 75
     gamma = 1
     inactive_color = ["#FAE5CB", "#CBE6FA"]
     active_color = ["SandyBrown","LightSkyBlue"]
@@ -91,7 +91,6 @@ class Player(BasePlayer):
     ancestor_participant_id = models.IntegerField(default=0)
     g_advice = models.LongStringField(initial = '',label="Advice:")
     # ID fields
-    first_gen = models.BooleanField(initial = False)
     session_end = models.BooleanField(initial = False)
     last_gen = models.BooleanField(initial = False)
     side = models.BooleanField(initial = False)
@@ -120,7 +119,7 @@ def creating_session(subsession: Subsession):
     random.seed(a=seed, version=2)
     extra_rounds = C.num_dynasty*2+len(C.history) # accounts for survey question rounds
     dice_rolls = np.random.randint(1, 101, C.NUM_ROUNDS+1).tolist()
-    while sum(i > delta for i in dice_rolls[0:(C.NUM_ROUNDS-len(C.history)-extra_rounds)]) <= C.num_dynasty-1:
+    while sum(i > delta for i in dice_rolls[0:(C.NUM_ROUNDS-len(C.history)-extra_rounds)]) < C.num_gen:
         dice_rolls = np.random.randint(1, 101, C.NUM_ROUNDS+1).tolist()
     subsession.session.vars['dice_rolls'] = dice_rolls
 
@@ -220,8 +219,7 @@ def creating_session(subsession: Subsession):
                         p.participant.vars['r_advice'] = ancestor.g_advice
             else: # first group in dynasty
                 for p in group_players:
-                    p.first_gen = (p.session_gen == 1)
-                    if p.first_gen:
+                    if p.session_gen == 1:
                         p.participant.vars['rfirst'] = False
                         p.gen = p.session_gen
                         get_tag(p)
@@ -268,7 +266,6 @@ def creating_session(subsession: Subsession):
             get_tag(p)
             p.session_gen = p.in_round(nround - 1).session_gen
             p.session_end = (p.session_gen == C.num_gen)
-            p.first_gen = p.in_round(nround - 1).first_gen
         #active_players = [player for player in players if player.session_gen == subsession.current_gen]
             p.participant.vars['wait'] = False
             if p.session_gen == subsession.current_gen: # Pass advice in later generations (inheritance already random from role)
@@ -335,7 +332,7 @@ def string_to_bool(comma_string): # converts comma strings to boolean list
 
 def sort_gresponse(player: Player):
     N = player.subsession.num_questions
-    if player.first_gen == 1:
+    if player.session_gen == 1:
         return player.participant.vars['interprets'][0: N]
     if player.participant.vars['rfirst']:
         return player.participant.vars['interprets'][N:2 * N]
@@ -344,7 +341,7 @@ def sort_gresponse(player: Player):
 
 def sort_rresponse(player: Player):
     N = player.subsession.num_questions
-    if player.first_gen == 1:
+    if player.session_gen == 1:
         ValueError("No received advice")
     if player.last_gen:
         return player.participant.vars['interprets'][0: N]
@@ -418,7 +415,7 @@ class Introduction(Page):
             'survey_instr': not (player.stage == 0),
             'gam_gen': player.subsession.current_gen,
             'gen': player.session_gen,
-            'first_gen': player.first_gen,
+            'first_gen': player.session_gen==1,
             'delta':player.subsession.delta,
             'pred_tag': predecessor_tag(player),
             'advice':advice,
@@ -475,7 +472,7 @@ class React(Page):
             'period': player.subsession.round,
             'interprets': player.participant.vars['interprets'],
             'asurvey': player.participant.vars['asurvey'],
-            'first_gen': player.first_gen,
+            'first_gen': player.session_gen == 1,
             'first_period': player.subsession.first_period,
             'history': [],
             'delta':player.subsession.delta,
@@ -511,7 +508,7 @@ class Decision(Page):
             'period': player.subsession.round,
             'interprets': player.participant.vars['interprets'],
             'asurvey': player.participant.vars['asurvey'],
-            'first_gen': player.first_gen,
+            'first_gen': player.session_gen == 1,
             'first_period': player.subsession.first_period,
             'history': player.participant.vars['match_history'],
             'delta':player.subsession.delta,
@@ -548,7 +545,7 @@ class Survey(Page):
             advice = player.participant.vars['g_advice'] # g_advice survey
             active_tag = successor_tag(player)
             opp_tag = successor_tag(get_opponent(player))
-        if player.first_gen or (player.session.config['gen_end'] and player.session_end):
+        if player.session_gen == 1 or (player.session.config['gen_end'] and player.session_end):
             num_q = N
         else:
             num_q =2*N
@@ -569,7 +566,7 @@ class Survey(Page):
             'active_opp_tag':opp_tag,
             'pred_tag': predecessor_tag(player),
             'succ_tag': successor_tag(player),
-            'first_gen': player.first_gen,
+            'first_gen': player.session_gen == 1,
             'gadvice': player.g_advice,
             'r': r_survey,
             'round': len(historyq)+1,
@@ -608,7 +605,7 @@ class Results1WaitPage(WaitPage):
 
 class ResultsWaitPage(WaitPage):
     wait_for_all_groups = True
-    template_name = 'prisoner/ResultsWaitPage.html'
+    template_name = 'GPD/ResultsWaitPage.html'
     @staticmethod
     def is_displayed(player: Player):
         return player.subsession.period_number != 2
@@ -660,10 +657,10 @@ class ResultsWaitPage(WaitPage):
                         Gdone = (predecessor.stage >= N)
                 else: # session_gen == 1
                     Gdone = True
-                    if p.first_gen:
+                    if p.session_gen == 1:
                         num_question = N
                         p.participant.vars['rpoints'] = 0
-                if not p.first_gen:
+                if p.session_gen != 1:
                     # has receiver advice
                     # calculate Rdone, if current player finished received advice survey
                     if p.participant.vars['rfirst']:
@@ -709,7 +706,7 @@ class ResultsWaitPage(WaitPage):
             'Cbutton_color': C.active_color[True],
             'my_color':"style=\"background:"+C.inactive_color[player.cooperate]+";\"",
             'my_decision':player.cooperate,
-            'first_gen': player.first_gen,
+            'first_gen': player.session_gen == 1,
             'asurvey':player.participant.vars['asurvey'],
             'survey':player.participant.vars['interprets'],
             'rsurvey':player.r_survey,
@@ -744,6 +741,7 @@ class Results1(Page):
         return dict(
             payoff_round = player.subsession.payoff_round,
             round_number = player.subsession.round_number,
+            r2_decision=player.cooperate,
             opponent=opponent,
             same_choice=player.in_round(n).cooperate == opponent.in_round(n).cooperate,
             period = player.subsession.round,
@@ -761,7 +759,7 @@ class Results1(Page):
             tag = player.participant.vars['tag'],
             opp_tag = get_opponent(player).participant.vars['tag'],
             pred_tag = predecessor_tag(player),
-            first_gen= player.first_gen,
+            first_gen= player.session_gen == 1,
             last_per=player.subsession.last_period,
             delta=player.subsession.delta,
             first_period = False,
@@ -801,7 +799,7 @@ class Results(Page):
             tag = player.participant.vars['tag'],
             opp_tag = get_opponent(player).participant.vars['tag'],
             pred_tag = predecessor_tag(player),
-            first_gen= player.first_gen,
+            first_gen= player.session_gen == 1,
             last_per=player.subsession.last_period,
             delta=player.subsession.delta,
             first_period = False,
@@ -852,7 +850,7 @@ class EndOfMatch(Page):
             history = player.participant.vars['match_history'],
             delta=player.subsession.delta,
             r_advice=player.participant.vars['r_advice'],
-            first_gen= player.first_gen,
+            first_gen= player.session_gen == 1,
             per= player.subsession.round,)
 
 
@@ -863,7 +861,7 @@ class EndOfMatch(Page):
 
 
 class SaveLocal(WaitPage):
-    template_name = 'prisoner/PreWait.html'
+    template_name = 'GPD/PreWait.html'
     @staticmethod
     def is_displayed(player: Player):
         N = player.subsession.num_questions
@@ -952,7 +950,7 @@ class EndOfGame(Page):
         )
 
 class EndWait(WaitPage):
-    template_name = 'prisoner/EndWait.html'
+    template_name = 'GPD/EndWait.html'
     #timeout_seconds = 30
     @staticmethod
     def is_displayed(player: Player):

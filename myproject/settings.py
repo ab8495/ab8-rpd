@@ -2,9 +2,17 @@ from os import environ
 
 SESSION_CONFIGS = [
     dict(
-        name='prisoner',
-        display_name="Prisoner",
-        app_sequence=['prisoner', 'payment_info'],
+        name='GPD',
+        display_name="GPD",
+        app_sequence=['GPD', 'payment_info'],
+        num_demo_participants= 2, # num_groups*
+        gen_end = False, # final generation
+        dynasty_session = 1,
+    ),
+    dict(
+        name='RPD',
+        display_name="RPD",
+        app_sequence=['RPD', 'payment_info'],
         num_demo_participants= 2, # num_groups*
         gen_end = False, # final generation
         dynasty_session = 1,
@@ -23,7 +31,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     real_world_currency_per_point=0.10, participation_fee=14.00, doc=""
 )
 
-PARTICIPANT_FIELDS = ['tag','rpoints','rsurvey','gsurvey','g_advice','r_advice','match_history']
+PARTICIPANT_FIELDS = ['tag','rpoints','rsurvey','gsurvey','g_advice','r_advice','match_history','match_payoffs']
 SESSION_FIELDS = []
 
 # ISO-639 code

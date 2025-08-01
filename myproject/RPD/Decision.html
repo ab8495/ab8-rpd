@@ -1,0 +1,175 @@
+{{ block title }} Round {{ period }} Choice{{ endblock }}
+{{ block content }}
+{% block styles %}
+{% include 'GPD/style.html'%}
+<style>
+        .info {
+            margin-bottom: 3cm;
+        }
+        .advice {
+            text-align:left;
+            border:1px solid black;
+            border-padding:10px;
+        }
+
+        .otree-body {
+            max-width: 100%
+
+        }
+
+        .otree-title {
+            text-align: center;
+         }
+
+        .fixed_table {
+            table-layout:fixed;
+            width:330px;
+            height:380px;
+        }
+
+        td {
+            text-align: center;
+            font-size: 125%;
+        }
+
+
+        .btn-primary {
+            box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.24), 0 2px 6px 0 rgba(0, 0, 0, 0.19);}
+
+        .btn-primary:hover {
+            box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+        }
+
+        .buttonC {
+            background-color: {{Cbutton_color}};
+            color: black;
+            border: 1px black;
+        }
+
+        .buttonD {
+            background-color: {{Dbutton_color}};
+            color: black;
+            border: 1px black;
+        }
+
+        .buttonC:hover {
+            background-color: {{Cbutton_hover}};
+        }
+
+        .buttonD:hover {
+            background-color: {{Dbutton_hover}};
+        }
+
+        .left {
+            width: 50%;
+        }
+
+        .right {
+            width: 50%;
+            border-left: 2px solid black;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        h3 {
+            text-align: center;
+        }
+
+        h4 {
+            text-align: center;
+        }
+
+        .choice {
+            margin-left: 0px
+        }
+
+        .payoffs {
+            height: 75px;
+            border: solid black;
+            border-width: 2px;
+        }
+
+        .your-choice {
+            border: none;
+            width: 60px;
+            font-weight: bold;
+        }
+
+        .empty {
+            border: none;
+        }
+
+        .fixed_table_info {
+            table-layout:fixed;
+            height:130px;
+            width:320px;
+        }
+
+        .info_cells {
+            height: 20px;
+            width: 60px;
+            border: 0.5px solid black;
+        }
+
+        .info_cells_header {
+            height: 20px;
+            width: 50px;
+            border: none;
+        }
+
+        .vertical-row {
+            Float: left;
+            height: 400px;
+            width: 1px; /* edit this if you want */
+            background-color: black
+        }
+        .noselect {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -khtml-user-select: none; /* Konqueror HTML */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+        }
+    </style>
+{% endblock %}
+
+<div class="row">
+  <div class="left">
+    <div class="form-group required">
+        <table class="table table-bordered text-center" style="width: auto; margin: auto">
+            <tr>
+                <th colspan="2" rowspan="2">Round {{period}}</th>
+                <th colspan="2">Other's Choice</th>
+            </tr>
+            <tr>
+                <th>{{ C.C_TAG}}</th>
+                <th>{{ C.D_TAG}}</th>
+            </tr>
+            <tr>
+                <th rowspan="2"><span>Your Choice</span></th>
+                <td><button name="cooperate" value="True" class="btn btn-primary btn-large buttonC">{{ C.C_TAG}}</button></td>
+                <td><b>{{C.PAYOFF_CC}}</b>, {{C.PAYOFF_CC}}</td>
+                <td><b>{{ C.PAYOFF_CD }}</b>, {{C.PAYOFF_DC}}</td>
+            </tr>
+            <tr>
+                <td><button name="cooperate" value="False" class="btn btn-primary btn-large buttonD">{{ C.D_TAG}}</button></td>
+                <td><b>{{C.PAYOFF_DC}}</b>, {{ C.PAYOFF_CD }}</td>
+                <td><b>{{C.PAYOFF_DD}}</b>, {{C.PAYOFF_DD}}</td>
+            </tr>
+        </table>
+    </div>
+      <p style="margin-top: 1cm;">
+          Please choose one of the above options.
+      </p>
+  </div>
+  <div class="right">
+    {% include 'RPD/left-info.html'%}
+  </div>
+</div>
+
+
+{{ endblock }}

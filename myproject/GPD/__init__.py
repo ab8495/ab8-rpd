@@ -29,10 +29,10 @@ class C(BaseConstants):
     NUM_ROUNDS = 50
     C_TAG = '1' # label for cooperation
     D_TAG = '2' # label for defection
-    num_gen = 1
+    num_gen = 2
     num_dynasty = 5
     PLAYERS_PER_GROUP = num_gen*2
-    delta = 75
+    delta = 50
     gamma = 1
     inactive_color = ["#FAE5CB", "#CBE6FA"]
     active_color = ["SandyBrown","LightSkyBlue"]
@@ -762,6 +762,7 @@ class Results1(Page):
             first_gen= player.session_gen == 1,
             last_per=player.subsession.last_period,
             delta=player.subsession.delta,
+            payoff = player.in_round(n).payoff,
             first_period = False,
             r_advice = player.participant.vars['r_advice'],
             g_advice=player.participant.vars['g_advice'],

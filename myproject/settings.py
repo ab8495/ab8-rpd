@@ -5,7 +5,7 @@ SESSION_CONFIGS = [
         name='GPD',
         display_name="GPD",
         app_sequence=['GPD', 'payment_info'],
-        num_demo_participants= 2, # num_groups*
+        num_demo_participants= 4, # num_groups*
         gen_end = False, # final generation
         dynasty_session = 1,
     ),

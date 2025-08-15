@@ -105,7 +105,9 @@
 {{ block content }}
 <div class="row">
     <p>
-        You have finished the experiment. You have earned a total of {{ payoff }}, equivalent to <b>{{money_payoff}}</b>  (including your participation fee).
+        You have finished the experiment.</p>
+    <p> Match number {{payoff_match}} has been randomly selected to determine your earnings from this experiment.</p>
+    <p>You obtained {{ payoff }} from this match, equivalent to <b>{{money_payoff}}</b>  (including your participation fee).
     </p>
 </div>
 {{ endblock }}

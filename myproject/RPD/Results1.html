@@ -7,7 +7,9 @@
             max-width: 100%
 
         }
-
+th {
+  vertical-align: middle;
+}
         .otree-title {
             text-align: center;
          }
@@ -127,7 +129,7 @@
     <div class="form-group required">
         <table class="table table-bordered text-center" style="width: auto; margin: auto">
             <tr>
-                <th colspan="2" rowspan="2">Round {{period}}</th>
+                <th colspan="2" rowspan="2"><h4>Round 1</h4></th>
                 <th colspan="2">Other's Choice</th>
             </tr>
             <tr>
@@ -151,18 +153,30 @@
           Above is the outcome from round 1.
       </p>
     <p>
-        The roll in round 1 was {{ roll }}.
+        The roll in round 1 was <i>{{ roll }}</i>.
          {{ if last_per }}
-        This is more than {{ delta }}, so this match is over.</p>
-      <p> In this match you obtained <b>{{ player.payoff }}</b>. </p>
-    <button class="btn btn-primary btn-large">
-    New Match
-</button>
+            This is more than {{ delta }}, so this match is over.</p>
+            <p> You obtained <b>{{ pay }}</b> from this match. </p>
+            {{ if end }}
+                <p> This was your final match.</p>
+                <button class="btn btn-primary btn-large">
+                    See Results
+                </button>
+            {{ else }}
+                <button class="btn btn-primary btn-large">
+                    New Match
+                </button>
+            {{ endif }}
         {{ else }}
-        This is not more than {{ delta }}, so this phase of the experiment will last another round.</p>
-
-    <button class="btn btn-primary btn-large">
-    Next round
-</button>
+            This is not more than {{ delta }}, so this phase of the experiment will last another round.</p>
+            <p>Because the other participant
+                {{ if opp_decision }}<b style="background-color:{{C_inactive}}"> chose {{C.C_TAG}}</b>,
+                {{ else }}<b style="background-color:{{D_inactive}}"> chose {{C.D_TAG}}</b>,{{endif}}
+                in Round 2 your choice will be
+                {{ if next_decision }}<b style="background-color:{{C_inactive}}"> option {{C.C_TAG}}</b>.
+                {{ else }}<b style="background-color:{{D_inactive}}"> option {{C.D_TAG}} </b>.{{endif}}</p>
+            <button class="btn btn-primary btn-large">
+                Next round
+            </button>
         {{ endif }}
 {{ endblock }}

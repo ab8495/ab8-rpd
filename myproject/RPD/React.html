@@ -1,4 +1,4 @@
-{{ block title }} Round {{ period }} Scenario {{version}} {{ endblock }}
+{{ block title }} Round {{ period }} {{ endblock }}
 {{ block content }}
 {% block styles %}
 {% include 'RPD/style.html'%}
@@ -100,7 +100,9 @@
         .empty {
             border: none;
         }
-
+th {
+  vertical-align: middle;
+}
         .fixed_table_info {
             table-layout:fixed;
             height:130px;
@@ -137,17 +139,23 @@
     </style>
 {% endblock %}
 
-    <div class='row' style = 'border:1px solid black;padding:20px;margin-bottom: 1px;height:auto;width:800px;margin:0 auto;'>
-        <h2 align="center"><b>Scenario: </b></h2>
+    <div class='row' style = 'border:1px solid black;padding:20px;margin-bottom: 1px;height:auto;width:900px;margin:0 auto;'>
+        <h2 align="center"><b>Scenario {{if version}}1{{else}}2{{endif}}: </b></h2>
         <div class = "left">
             <p>
-                If the other participant chose <b>{{ version }}</b> in the first round, leading to the outcome on the right, which option would you choose in the second round?
+                If the other participant
+                {{ if version }}<b style="background-color:{{C_inactive}}"> chose {{C.C_TAG}}</b>
+                {{ else }}<b style="background-color:{{D_inactive}}"> chose {{C.D_TAG}} </b>{{endif}}
+                in the first round, leading to the outcome on the right, which option will you choose for the second round?
+            </p>
+            <p>
+                Please click on your choice below.
             </p>
         </div>
         <div class = "right">
             <table class="table table-bordered text-center" style="width: auto; margin: auto">
                 <tr>
-                    <th colspan="2" rowspan="2">Round 1</th>
+                    <th colspan="2" rowspan="2" align-items="center"><h4>Round 1</h4> (Outcome)</th>
                     <th colspan="2">Other's Choice</th>
                 </tr>
                 <tr>
@@ -170,13 +178,10 @@
     </div>
 <div class="row" style = "margin-top: 1cm;">
   <div class="center">
-      <p>
-          Choose which choice to make in round 2 of this scenario:
-      </p>
     <div class="form-group required">
         <table class="table table-bordered text-center" style="width: auto; margin: auto">
             <tr>
-                <th colspan="2" rowspan="2">Round {{period}}</th>
+                <th colspan="2" rowspan="2" class="center"><h4>Round {{period}}</h4></th>
                 <th colspan="2">Other's Choice</th>
             </tr>
             <tr>
@@ -185,12 +190,20 @@
             </tr>
             <tr>
                 <th rowspan="2"><span>Your Choice</span></th>
-                <td><button name="react" value="True" class="btn btn-primary btn-large buttonC">{{ C.C_TAG}}</button></td>
+                {{ if version }}
+                <td><button name="reactC" value="True" class="btn btn-primary btn-large buttonC">{{ C.C_TAG}}</button></td>
+                {{ else }}
+                <td><button name="reactD" value="True" class="btn btn-primary btn-large buttonC">{{ C.C_TAG}}</button></td>
+                {{endif}}
                 <td><b>{{C.PAYOFF_CC}}</b>, {{C.PAYOFF_CC}}</td>
                 <td><b>{{ C.PAYOFF_CD }}</b>, {{C.PAYOFF_DC}}</td>
             </tr>
             <tr>
-                <td><button name="react" value="False" class="btn btn-primary btn-large buttonD">{{ C.D_TAG}}</button></td>
+                {{ if version }}
+                <td><button name="reactC" value="False" class="btn btn-primary btn-large buttonD">{{ C.D_TAG}}</button></td>
+                {{ else }}
+                <td><button name="reactD" value="False" class="btn btn-primary btn-large buttonD">{{ C.D_TAG}}</button></td>
+                {{endif}}
                 <td><b>{{C.PAYOFF_DC}}</b>, {{ C.PAYOFF_CD }}</td>
                 <td><b>{{C.PAYOFF_DD}}</b>, {{C.PAYOFF_DD}}</td>
             </tr>

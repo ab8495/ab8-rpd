@@ -17,7 +17,9 @@
             width:330px;
             height:380px;
         }
-
+th {
+  vertical-align: middle;
+}
         td {
             text-align: center;
             font-size: 125%;
@@ -129,7 +131,7 @@
     <div class="form-group required">
         <table class="table table-bordered text-center" style="width: auto; margin: auto">
             <tr>
-                <th colspan="2" rowspan="2">Round {{period}}</th>
+                <th colspan="2" rowspan="2" class = "center"><h4>Round {{period}}</h4></th>
                 <th colspan="2">Other's Choice</th>
             </tr>
             <tr>
@@ -150,24 +152,30 @@
         </table>
     </div>
       <p>
-          Above is the outcome for Round {{ period }}.
+          Above is the outcome for round {{ period }}.
       </p>
     <p>
-        The roll for this round was {{ roll }}.
+        The roll for this round was <i>{{ roll }}</i>.
         {{ if last_per }}
-        This is more than {{ delta }}, so this match is over.</p>
-      <p> In this match you obtained <b>{{ player.payoff }}</b>. </p>
-    <button class="btn btn-primary btn-large">
-    New Match
-</button>
+            This is more than {{ delta }}, so this match is over.</p>
+            <p> You obtained <b>{{ payoff }}</b> from this match. </p>
+            {{ if end }}
+                <p> This was your final match.</p>
+                <button class="btn btn-primary btn-large">
+                    See Results
+                </button>
+            {{ else }}
+                <button class="btn btn-primary btn-large">
+                    New Match
+                </button>
+            {{ endif }}
         {{ else }}
-        This is not more than {{ delta }}, so this phase of the experiment will last another round.</p>
+            This is not more than {{ delta }}, so this match will last another round.</p>
 
-    <button class="btn btn-primary btn-large">
-    Next round
-</button>
+            <button class="btn btn-primary btn-large">
+                Next round
+            </button>
         {{ endif }}
-
   </div>
   <div class="right">
     {% include 'RPD/left-info.html'%}

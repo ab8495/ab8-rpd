@@ -19,13 +19,12 @@ class C(BaseConstants):
     PAYOFF_CD = 10
     PAYOFF_DC = 100
     PAYOFF_DD = 35
-    PAYOFF_I = cu(5) # interpretation payoff
     NUM_ROUNDS = 60
     C_TAG = '1' # label for cooperation
     D_TAG = '2' # label for defection
-    num_match = 4
+    num_match = 3
     PLAYERS_PER_GROUP = 2
-    delta = 1
+    delta = 50
     gamma = 1
     inactive_color = ["#FAE5CB", "#CBE6FA"]
     active_color = ["SandyBrown","LightSkyBlue"]
@@ -37,37 +36,28 @@ class C(BaseConstants):
 
 class Subsession(BaseSubsession):
     dice_roll = models.IntegerField(initial=-10)
-    first_period = models.BooleanField(initial=True)  # True if it is the first period of a match
     last_period = models.BooleanField(initial=False)  # True if it is the last period of a match
-    match_number = models.IntegerField(initial=0)
-    period_number = models.IntegerField(initial=1)
-    current_gen = models.IntegerField(initial=0)
-    current_gen_first_round = models.IntegerField(initial=1)
-    delta = models.IntegerField(initial = C.delta)
-    stop_session = models.BooleanField(initial = False)
-    payoff_round = models.IntegerField(initial = 1)
-    payoff_match = models.IntegerField(initial = -1)
-    round = models.IntegerField(initial = 1)
+    match_number = models.IntegerField(initial=1) # supergame number
+    period_number = models.IntegerField(initial=1) # period within supergame
+    payoff_match = models.IntegerField(initial = -1) # match that will be compensated
 
 class Group(BaseGroup):
-    number = models.IntegerField()
-
+    pass
 class Player(BasePlayer):
     # Game fields
-    action = models.StringField(initial=C.D_TAG)
     cooperate = models.BooleanField(
         choices=[[True, C.C_TAG], [False, C.D_TAG]],
         doc="""This player's decision""",
         widget=widgets.RadioSelect,
-        initial= False,
     )
-    react = models.BooleanField(
+    reactC = models.BooleanField(
         choices=[[True, C.C_TAG], [False, C.D_TAG]],
         doc="""This player's decision""",
-        widget=widgets.RadioSelect,
-        initial= False,)
-    # ID fields
-    side = models.BooleanField(initial = False)
+        widget=widgets.RadioSelect,)
+    reactD = models.BooleanField(
+        choices=[[True, C.C_TAG], [False, C.D_TAG]],
+        doc="""This player's decision""",
+        widget=widgets.RadioSelect,)
 
 
 # FUNCTIONS
@@ -90,54 +80,33 @@ def creating_session(subsession: Subsession):
     roll = -1
 
     nround = subsession.round_number # current round
-    if nround == 1:
-        roll = dice_rolls[1]
-    else:
-        subsession.current_gen = subsession.in_round(nround - 1).current_gen
+    if nround > 1:
         subsession.match_number = subsession.in_round(nround - 1).match_number
-        if subsession.in_round(nround-1).last_period:
+        subsession.period_number = subsession.in_round(nround - 1).period_number + 1
+        if subsession.in_round(nround-1).last_period and subsession.period_number >2: # new match
             subsession.period_number = 1
-        else:
-            subsession.period_number = subsession.in_round(nround-1).period_number + 1
-            subsession.round = subsession.in_round(nround-1).round + 1
-            subsession.current_gen_first_round = subsession.in_round(nround-1).current_gen_first_round
-            if subsession.period_number == 3:
-                subsession.round = subsession.round - 1
-
+            subsession.match_number += 1
 
     players = subsession.get_players()
-    if nround == subsession.current_gen_first_round:
+    if subsession.period_number == 1: #new match
         subsession.group_randomly()
-        subsession.period_number = 1
-        subsession.current_gen = subsession.current_gen + 1
-        #subsession.group_randomly()
-        for group in subsession.get_groups():
-            group_players = group.get_players()
-            random.shuffle(group_players)
-            sides = [True, False]
-            for p, side in zip(group_players, sides):
-                p.side = side
-    else:
-        subsession.group_like_round(subsession.current_gen_first_round)
-        for p in players:
+        for p in players: # wipe history
             p.participant.vars['match_history'] = {}
-            p.participant.vars['match_payoffs'] = []
-            p.side = p.in_round(nround - 1).side
-    if subsession.period_number != 2 and nround >= 3:
-        roll = dice_rolls[nround - 1]
-        roll1 = -1
-        if subsession.period_number == 3:
-            roll1 = subsession.in_round(nround - 2).dice_roll
-        if roll1 > delta or roll > delta:
-            subsession.last_period = True
-            subsession.match_number += 1
-            if roll1 > delta:
-                subsession.payoff_round = nround - 2
-                print(nround)
-            if subsession.match_number >= C.num_match:
-                subsession.payoff_match = np.random.randint(1, subsession.match_number+1)
-    subsession.delta = delta
+            if nround == 1: # initialize payoffs
+                p.participant.vars['match_payoffs'] = []
+    else:
+        # keep same groups
+        subsession.group_like_round(nround - 1)
+
+    roll = dice_rolls[nround]
     subsession.dice_roll = roll
+    if subsession.period_number == 2:
+        subsession.last_period = subsession.in_round(nround-1).last_period
+    if roll > delta:
+        subsession.last_period = True
+    if subsession.last_period and subsession.match_number == C.num_match:
+        subsession.payoff_match = np.random.randint(1, subsession.match_number)
+
 
 def get_opponent(player: Player): # identify opponent
     for j in player.get_others_in_group():
@@ -160,50 +129,75 @@ def set_payoffs(group: Group):
 
 
 
-class React(Page):
+class ReactC(Page):
     form_model = 'player'
-    form_fields = ['react']
+    form_fields = ['reactC']
+    template_name = 'RPD/React.html'
 
     @staticmethod
     def is_displayed(player: Player):
-        return (player.subsession.period_number == 2 or player.subsession.period_number == 3)
+        return (player.subsession.period_number == 2)
     @staticmethod
     def vars_for_template(player: Player):
         n = player.subsession.round_number
-        scenario = player.subsession.period_number - 1
-        if scenario == 1:
-            p_cooperate = player.in_round(n-1).cooperate
-            opp_cooperate = True
+
+        # If other cooperate
+        p_cooperate = player.in_round(n-1).cooperate
+        opp_cooperate = True
             #history = {'P1': {'period': '1', 'cooperate':p_cooperate, 'name_action': player.in_round(n-1).action,
                             #'opp_cooperate':opp_cooperate,'name_opp_action': 1}}
-        else:
-            p_cooperate = player.in_round(n-2).cooperate
-            opp_cooperate = False
-            #history = {'P1': {'period': '1', 'cooperate':p_cooperate, 'name_action': player.in_round(n-1).action,
-                            #'opp_cooperate':opp_cooperate,'name_opp_action': 2}}
         return {
             'period':2,
-            'round_number': player.subsession.round_number,
             'history_Ccolor': "style=\"background-color:"+C.history_color[True]+"\"",
             'history_Dcolor': "style=\"background-color:"+C.history_color[False]+"\"",
+            'D_inactive':C.inactive_color[False],
+            'C_inactive':C.inactive_color[True],
             'Dbutton_color': C.button_color[False],
             'Cbutton_color': C.button_color[True],
             'Dbutton_hover': C.hover_color[False],
             'Cbutton_hover': C.hover_color[True],
-            'version':scenario,
+            'version':True,
             'my_decision':p_cooperate,
             'opp_cooperate':opp_cooperate,
             'my_color':"style=\"background:"+C.inactive_color[p_cooperate]+";\"",
             'opp_color':"style=\"background:"+C.inactive_color[opp_cooperate]+";\"",
             'outcome_color':"style=\"background:"+C.outcome_color[opp_cooperate]+";\"",
-            'first_period': player.subsession.first_period,
-            'history': [],
-            'delta':player.subsession.delta,
-            'CTAG':C.C_TAG,
-            'DTAG':C.D_TAG,
-            'round': player.subsession.round_number,
-            'session':player.session_id,
-            'pay': player.participant.vars['match_payoffs'],
+            'delta':C.delta,
+        }
+
+class ReactD(Page):
+    form_model = 'player'
+    form_fields = ['reactD']
+    template_name = 'RPD/React.html'
+
+    @staticmethod
+    def is_displayed(player: Player):
+        return (player.subsession.period_number == 2)
+    @staticmethod
+    def vars_for_template(player: Player):
+        n = player.subsession.round_number
+        # Other defects Defect
+        p_cooperate = player.in_round(n-1).cooperate
+        opp_cooperate = False
+        #history = {'P1': {'period': '1', 'cooperate':p_cooperate, 'name_action': player.in_round(n-1).action,
+                            #'opp_cooperate':opp_cooperate,'name_opp_action': 2}}
+        return {
+            'period':2,
+            'history_Ccolor': "style=\"background-color:"+C.history_color[True]+"\"",
+            'history_Dcolor': "style=\"background-color:"+C.history_color[False]+"\"",
+            'D_inactive':C.inactive_color[False],
+            'C_inactive':C.inactive_color[True],
+            'Dbutton_color': C.button_color[False],
+            'Cbutton_color': C.button_color[True],
+            'Dbutton_hover': C.hover_color[False],
+            'Cbutton_hover': C.hover_color[True],
+            'version':False,
+            'my_decision':p_cooperate,
+            'opp_cooperate':opp_cooperate,
+            'my_color':"style=\"background:"+C.inactive_color[p_cooperate]+";\"",
+            'opp_color':"style=\"background:"+C.inactive_color[opp_cooperate]+";\"",
+            'outcome_color':"style=\"background:"+C.outcome_color[opp_cooperate]+";\"",
+            'delta':C.delta,
         }
 
 class Decision(Page):
@@ -211,135 +205,133 @@ class Decision(Page):
     form_fields = ['cooperate']
     @staticmethod
     def is_displayed(player: Player):
-        return (player.subsession.period_number != 2 and player.subsession.period_number != 3)
+        return (player.subsession.period_number != 2)
     @staticmethod
     def vars_for_template(player: Player):
         return {
-            'opponent': get_opponent(player),
-            'first_period': player.subsession.round == 1,
-            'round_number': player.subsession.round_number,
+            'match': player.subsession.match_number,
+            'group': [player.id_in_subsession, get_opponent(player).id_in_subsession],
+            'first_period': player.subsession.period_number == 1,
             'history_Ccolor': "style=\"background-color:"+C.history_color[True]+"\"",
             'history_Dcolor': "style=\"background-color:"+C.history_color[False]+"\"",
             'Dbutton_color': C.button_color[False],
             'Cbutton_color': C.button_color[True],
             'Dbutton_hover': C.hover_color[False],
             'Cbutton_hover': C.hover_color[True],
-            'period': player.subsession.round,
+            'period': player.subsession.period_number,
             'history': player.participant.vars['match_history'],
-            'delta':player.subsession.delta,
-            'CTAG':C.C_TAG,
-            'DTAG':C.D_TAG,
-            'session':player.session_id,
-            'match':player.subsession.match_number,
+            'delta':C.delta,
         }
-
-class Results1WaitPage(WaitPage):
-    @staticmethod
-    def is_displayed(subsession: Subsession):
-        return subsession.period_number == 3
-
-    @staticmethod
-    def after_all_players_arrive(subsession: Subsession):
-        n = subsession.round_number
-        for group in subsession.get_groups():
-            for p in group.get_players():
-                opp = get_opponent(p)
-                p.cooperate = p.react
-                if opp.in_round(n-2).cooperate:
-                    p.cooperate = p.in_round(n-1).react
 
 class ResultsWaitPage(WaitPage):
     wait_for_all_groups = True
     template_name = 'RPD/ResultsWaitPage.html'
     @staticmethod
-    def is_displayed(player: Player):
-        return player.subsession.period_number != 2
-    @staticmethod
     def after_all_players_arrive(subsession: Subsession):
         for group in subsession.get_groups():
             n = subsession.round_number
-            if group.subsession.period_number == 3:
+            last_period = group.subsession.last_period
+
+            if group.subsession.period_number == 2: ## Determine actions for this period
+                if group.subsession.in_round(n-1).last_period:
+                    last_period = False
                 for p in group.get_players():
                     opp = get_opponent(p)
-                    p.cooperate = p.react
-                    if opp.in_round(n - 2).cooperate:
-                        p.cooperate = p.in_round(n - 1).react
+                    p.cooperate = p.reactD
+                    if opp.in_round(n - 1).cooperate:
+                        p.cooperate = p.reactC
 
-            set_payoffs(group)
-            round = str(group.subsession.round)
-            for p in group.get_players():
-                if p.subsession.last_period:
+            if last_period: ## Record payoffs
+                set_payoffs(group)
+                for p in group.get_players():
                     p.participant.vars['match_payoffs'].append(p.payoff)
+
+            ## Add history
+            round = str(group.subsession.period_number)
+            for p in group.get_players():
                 opp = get_opponent(p)
-                if p.cooperate:
-                    p.action = C.C_TAG
-                if opp.cooperate:
-                    opp.action = C.C_TAG
-                if p.subsession.round_number <= p.subsession.payoff_round:
-                    p.participant.vars['match_history']['P' + round] = {
+                p_action = C.C_TAG if p.cooperate else C.D_TAG
+                opp_action = C.C_TAG if opp.cooperate else C.D_TAG
+
+                p.participant.vars['match_history']['P' + round] = {
                         'period': round,
                         'cooperate':p.cooperate,
-                        'name_action': p.action,
+                        'name_action': p_action,
                         'opp_cooperate':opp.cooperate,
-                        'name_opp_action': opp.action
+                        'name_opp_action': opp_action
                     }
-                    continue
+                continue
 
 
 
     @staticmethod
     def vars_for_template(player: Player):
         opp = get_opponent(player)
+        n = player.subsession.period_number
+        if player.subsession.period_number == 2:
+            coop = player.in_round(n-1).cooperate
+            period = 1
+        else:
+            coop = player.in_round(n).cooperate
+            period = player.subsession.period_number
         return {
-            'first_period': player.subsession.period_number == 1,
+            'first_period': period == 1,
             'history_Ccolor': "style=\"background-color:"+C.history_color[True]+"\"",
             'history_Dcolor': "style=\"background-color:"+C.history_color[False]+"\"",
             'Dbutton_color': C.active_color[False],
             'Cbutton_color': C.active_color[True],
             'history': player.participant.vars['match_history'],
-            'my_color':"style=\"background:"+C.inactive_color[player.cooperate]+";\"",
-            'my_decision':player.cooperate,
-            'period': player.subsession.round,
-            'first_period': player.subsession.period_number==1,
+            'my_color':"style=\"background:"+C.inactive_color[coop]+";\"",
+            'my_decision':coop,
+            'period': period,
         }
 
 class Results1(Page):
     @staticmethod
     def is_displayed(player: Player):
-        return player.subsession.period_number == 3
+        return player.subsession.period_number == 2
 
     @staticmethod
     def vars_for_template(player: Player):
         opponent = get_opponent(player)
-        n = player.subsession.round_number-2 # first round
+        n = player.subsession.round_number-1 # first round
+        payoff= 0
+        if player.subsession.in_round(n).dice_roll>C.delta:
+            payoffs = player.participant.vars['match_payoffs']
+            payoff = payoffs[len(payoffs)-1]
         return dict(
             first_period = False,
-            payoff_round = player.subsession.payoff_round,
-            round_number = player.subsession.round_number,
-            opponent=opponent,
+            round_number = 1,
             same_choice=player.in_round(n).cooperate == opponent.in_round(n).cooperate,
             my_decision=player.in_round(n).cooperate,
             opp_decision=opponent.in_round(n).cooperate,
+            next_decision = player.cooperate,
             roll = player.subsession.in_round(n).dice_roll,
             history = player.participant.vars['match_history'],
             history_Ccolor = "style=\"background-color:"+C.history_color[True]+"\"",
             history_Dcolor = "style=\"background-color:"+C.history_color[False]+"\"",
+            D_inactive=C.inactive_color[False],
+            C_inactive=C.inactive_color[True],
             Dbutton_color= C.active_color[False],
             Cbutton_color= C.active_color[True],
             my_color="style=\"background:"+C.inactive_color[player.in_round(n).cooperate]+";\"",
             opp_color="style=\"background:"+C.inactive_color[opponent.in_round(n).cooperate]+";\"",
             outcome_color="style=\"background:"+C.outcome_color[opponent.in_round(n).cooperate]+";\"",
-            last_per=player.subsession.last_period,
-            delta=player.subsession.delta,
+            last_per=player.subsession.in_round(n).dice_roll>C.delta,
+            pay = payoff,
+            end=player.subsession.match_number == C.num_match,
+            delta=C.delta,
             match=player.subsession.match_number,
-            period= player.subsession.round,
-            opp = get_opponent(player),)
-
+            period= player.subsession.period_number,)
+    @staticmethod
+    def before_next_page(player, timeout_happened):
+        player.payoff = 0
 
 class Results(Page):
     @staticmethod
     def is_displayed(player: Player):
-        return player.subsession.period_number >= 3 and player.subsession.payoff_round != player.subsession.round_number - 2
+        n = player.subsession.round_number
+        return player.subsession.period_number >= 2 and not player.subsession.in_round(n-1).last_period
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -347,10 +339,15 @@ class Results(Page):
         p_cooperate = player.cooperate
         opp_cooperate = opponent.cooperate
 
+        payoff = 0
+        if player.subsession.last_period:
+            payoffs = player.participant.vars['match_payoffs']
+            payoff = payoffs[len(payoffs) - 1]
+
+        end_match = player.subsession.last_period and player.subsession.period_number >= 2
         return dict(
-            opponent=opponent,
-            same_choice=p_cooperate == opp_cooperate,
-            period = player.subsession.round,
+            first_period = False,
+            period = player.subsession.period_number,
             my_decision=p_cooperate,
             opp_decision=opp_cooperate,
             roll = player.subsession.dice_roll,
@@ -362,12 +359,9 @@ class Results(Page):
             my_color="style=\"background:"+C.inactive_color[player.cooperate]+";\"",
             opp_color="style=\"background:"+C.inactive_color[opponent.cooperate]+";\"",
             outcome_color="style=\"background:"+C.outcome_color[opponent.cooperate]+";\"",\
-            last_per=player.subsession.last_period,
-            delta=player.subsession.delta,
-            match=player.subsession.match_number,
-            pay = player.participant.vars['match_payoffs'],
-            first_period = False,
-            opp = get_opponent(player),)
+            last_per=end_match,
+            delta=C.delta,
+            match=player.subsession.match_number,)
 
     @staticmethod
     def before_next_page(player, timeout_happened):
@@ -377,35 +371,24 @@ class Results(Page):
 class EndOfMatch(Page):
     @staticmethod
     def is_displayed(player: Player):
-        return player.subsession.match_number >= C.num_match and player.subsession.last_period
+        end_match = player.subsession.last_period and player.subsession.period_number >= 2
+        return player.subsession.match_number >= C.num_match and end_match
 
     @staticmethod
     def vars_for_template(player: Player):
         opponent = get_opponent(player)
         player.payoff = player.participant.vars['match_payoffs'][player.subsession.payoff_match-1]
         return dict(
-            first_period = False,
-            roll=player.subsession.dice_roll,
-            round = player.subsession.round_number,
-            history_Ccolor = "style=\"background-color:"+C.history_color[True]+"\"",
-            history_Dcolor = "style=\"background-color:"+C.history_color[False]+"\"",
-            Dbutton_color= C.active_color[False],
-            Cbutton_color= C.active_color[True],
-            opponent=opponent,
-            sessionid=player.session.id,
-            same_choice=player.cooperate == opponent.cooperate,
-            my_decision=player.field_display('cooperate'),
-            opponent_decision=opponent.field_display('cooperate'),
-            history = player.participant.vars['match_history'],
-            delta=player.subsession.delta,
-            per= player.subsession.round,
-            payoff=player.participant.payoff,
+            match_payoffs=player.participant.vars['match_payoffs'],
+            payoff_match= player.subsession.payoff_match,
+            payoff=player.payoff,
             money_payoff = player.participant.payoff_plus_participation_fee()
         )
 
 page_sequence = [
-                 Decision, React,
-                 ResultsWaitPage, Results1,
+                 Decision, ReactC,ReactD,
+                 ResultsWaitPage,
+                  Results1,
                   Results,EndOfMatch]
 
 
